@@ -1,3 +1,22 @@
+<?php
+session_start();
+// --- TAMBAH BLOK INI ---
+if (isset($_SESSION['level']) && $_SESSION['level'] === 'admin') {
+    header("Location: index_admin.php");
+    exit;
+}
+include 'koneksi.php'; // Pastikan sudah di-include
+
+// Ambil Berita (limit 3)
+$sql_berita = "SELECT * FROM berita WHERE level='berita' ORDER BY tanggal_publikasi DESC LIMIT 3";
+$berita_result = $koneksi->query($sql_berita);
+
+// Ambil Pengumuman (limit 3)
+$sql_pengumuman = "SELECT * FROM berita WHERE level='pengumuman' ORDER BY tanggal_publikasi DESC LIMIT 3";
+$pengumuman_result = $koneksi->query($sql_pengumuman);
+
+// ... kode HTML dimulai ...
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -42,85 +61,99 @@
             <a href="#main-content" class="btn btn--primary">Jelajahi Sekarang</a>
         </div>
     </section>
-
-    <!-- Main Content -->
-    <main id="main-content">
-        <!-- News Section -->
-        <section class="section">
-            <div class="container">
-                <h2 class="section__title">Berita Terkini</h2>
+<!-- Main Content -->
+<main id="main-content">
+    <!-- News Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section__title">Berita Terkini</h2>
+            
+            <div class="news-grid">
+                <?php while($row = $berita_result->fetch_assoc()): ?>
+                <article class="news-card">
+                    <?php if(!empty($row['foto'])): ?>
+                        <img src="uploads/berita/<?= htmlspecialchars($row['foto']) ?>" 
+                             alt="<?= htmlspecialchars($row['judul']) ?>" 
+                             class="news-card__image">
+                    <?php else: ?>
+                        <!-- Fallback ke gambar default atau gambar dari folder foto -->
+                        <img src="foto/1.jpg" 
+                             alt="Kegiatan OSIS" 
+                             class="news-card__image">
+                    <?php endif; ?>
+                    
+                    <div class="news-card__content">
+                        <span class="news-card__date">
+                            <i class="fas fa-calendar-alt"></i> 
+                            <?= date('d F Y', strtotime($row['tanggal_publikasi'])) ?>
+                        </span>
+                        <h3 class="news-card__title"><?= htmlspecialchars($row['judul']) ?></h3>
+                        <p class="news-card__excerpt">
+                            <?= nl2br(htmlspecialchars(substr($row['isi'], 0, 150))) ?>...
+                        </p>
+                        
+                    </div>
+                </article>
+                <?php endwhile; ?>
                 
-                <div class="news-grid">
-                    <!-- News Item 1 -->
-                    <article class="news-card">
-                        <img src="foto/1.jpg" alt="Kegiatan OSIS" class="news-card__image">
-                        <div class="news-card__content">
-                            <span class="news-card__date">08 September 2025</span>
-                            <h3 class="news-card__title">Perayaan Hari Olahraga Nasional. (Day 1)</h3>
-                            <p class="news-card__excerpt">Acara dilaksanakan dengan kondusif</p>
-                        <a href="gallery.html?filter=olahraga" class="news-card__link"><i class="fas fa-arrow-right"></i> Selengkapnya</a>
-                        </div>
-                    </article>
-                    
-                    <!-- News Item 2 -->
-                    <article class="news-card">
-                        <img src="news2.jpg" alt="Kegiatan OSIS" class="news-card__image">
-                        <div class="news-card__content">
-                            <span class="news-card__date">-</span>
-                            <h3 class="news-card__title"></h3>
-                            <p class="news-card__excerpt"></p>
-                            <a href="#" class="news-card__link"><i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </article>
-                    
-                    <!-- News Item 3 -->
-                    <article class="news-card">
-                        <img src="news3.jpg" alt="Kegiatan OSIS" class="news-card__image">
-                        <div class="news-card__content">
-                            <span class="news-card__date">-</span>
-                            <h3 class="news-card__title"></h3>
-                            <p class="news-card__excerpt"></p>
-                            <a href="#" class="news-card__link"> <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </article>
-                </div>
+                <!-- Fallback jika tidak ada berita -->
+                <?php if($berita_result->num_rows === 0): ?>
+                <article class="news-card">
+                    <img src="foto/1.jpg" alt="Kegiatan OSIS" class="news-card__image">
+                    <div class="news-card__content">
+                        <span class="news-card__date">08 September 2025</span>
+                        <h3 class="news-card__title">Perayaan Hari Olahraga Nasional (Day 1)</h3>
+                        <p class="news-card__excerpt">Acara dilaksanakan dengan kondusif</p>
+                        <a href="gallery.html?filter=olahraga" class="news-card__link">
+                            <i class="fas fa-arrow-right"></i> Selengkapnya
+                        </a>
+                    </div>
+                </article>
+                <?php endif; ?>
             </div>
-        </section>
-        
-        <!-- Announcements Section -->
-        <section class="section bg-gray">
-            <div class="container">
-                <h2 class="section__title">Pengumuman Penting</h2>
-                
-                <div class="announcement-list">
-                    <!-- Announcement 1 -->
+        </div>
+    </section>
+    
+    <!-- Announcements Section -->
+    <section class="section bg-gray">
+        <div class="container">
+            <h2 class="section__title">Pengumuman Penting</h2>
+            
+            <div class="announcement-list">
+                <?php if ($pengumuman_result->num_rows > 0): ?>
+                    <?php while($row = $pengumuman_result->fetch_assoc()): ?>
+                    <div class="announcement-item">
+                        <span class="announcement-badge">
+                            <i class="fas fa-bullhorn"></i> PENTING
+                        </span>
+                        <div class="announcement-item__content">
+                            <h3 class="announcement-item__title"><?= htmlspecialchars($row['judul']) ?></h3>
+                            <p class="announcement-item__description">
+                                <?= nl2br(htmlspecialchars($row['isi'])) ?>
+                            </p>
+                            <span class="announcement-date">
+                                <i class="fas fa-clock"></i> 
+                                <?= date('d F Y', strtotime($row['tanggal_publikasi'])) ?>
+                            </span>
+                        </div>
+                    </div>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <!-- Fallback pengumuman -->
                     <div class="announcement-item">
                         <span class="announcement-badge">BARU</span>
                         <div class="announcement-item__content">
-                            <h3 class="announcement-item__title"></h3>
-                            <p class="announcement-item__description"></p>
+                            <h3 class="announcement-item__title">Selamat Datang di Website OSIS</h3>
+                            <p class="announcement-item__description">
+                                Website OSIS Raksana telah diluncurkan. Pantau terus untuk informasi terbaru kegiatan OSIS.
+                            </p>
                         </div>
                     </div>
-                    
-                    <!-- Announcement 2 -->
-                    <div class="announcement-item">
-                        <span class="announcement-badge">BARU</span>
-                        <div class="announcement-item__content">
-                            <h3 class="announcement-item__title"></h3>
-                            <p class="announcement-item__description"></p>
-                        </div>
-                    </div>
-                    
-                    <!-- Announcement 3 -->
-                    <div class="announcement-item">
-                        <div class="announcement-item__content">
-                            <h3 class="announcement-item__title"></h3>
-                            <p class="announcement-item__description"></p>
-                        </div>
-                    </div>
-                </div>
+                <?php endif; ?>
             </div>
-        </section>
+        </div>
+    </section>
+</main>
         
         <!-- Quick Links Section -->
         <section class="section">

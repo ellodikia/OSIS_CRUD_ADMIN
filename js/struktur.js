@@ -53,3 +53,41 @@
             navOverlay.classList.remove('active');
         });
         });
+        // Enhanced admin functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // File upload preview
+    const fileInput = document.getElementById('foto');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'Tidak ada file dipilih';
+            const label = document.querySelector('.file-upload-label span');
+            if (label) {
+                label.textContent = fileName;
+            }
+        });
+    }
+
+    // Admin card hover effects
+    const adminCards = document.querySelectorAll('.admin-main .card');
+    adminCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Form validation enhancement
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+                submitBtn.disabled = true;
+            }
+        });
+    });
+});

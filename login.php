@@ -1,9 +1,14 @@
 <?php
+session_start();
+
 if (isset($_POST['admin']) && isset($_POST['password'])) {
     $admin = $_POST['admin'];
     $password = $_POST['password'];
 
     if ($admin == "admin123" && $password == "osis123") {
+        $_SESSION['level'] = 'admin';
+        
+        // Redirect ke halaman admin
         header("Location: index_admin.php");
         exit;
     } else {
@@ -88,6 +93,7 @@ if (isset($_POST['admin']) && isset($_POST['password'])) {
             <input type="password" name="password" id="password" required>
 
             <input type="submit" value="Login">
+            <a href="index.php">halaman</a>
         </form>
     </div>
 </body>

@@ -530,3 +530,62 @@
             transform: translateY(-50%);
         }
     }
+    /* === STYLE CRUD ADMIN === */
+
+
+/* Tombol CRUD */
+.btn {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-add {
+    background: #27ae60;
+    color: #fff;
+}
+
+.btn-add:hover {
+    background: #1e8449;
+}
+
+.btn-edit {
+    background: #f39c12;
+    color: #fff;
+}
+
+.btn-edit:hover {
+    background: #d68910;
+}
+
+
+
+.btn-delete:hover {
+    background: #c0392b;
+}
+
+/* Form CRUD */
+form {
+    margin-top: 20px;
+}
+
+form label {
+    display: block;
+    margin: 8px 0 5px;
+    font-weight: bold;
+}
+
+form input, form textarea, form select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+form button {
+    margin-top: 15px;
+}

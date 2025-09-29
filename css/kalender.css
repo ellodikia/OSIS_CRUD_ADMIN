@@ -826,3 +826,270 @@
         transform: translateY(-50%);
     }
 }
+/* ================================
+       ADMIN STYLES
+    ================================ */
+
+/* Badge Admin */
+.admin-badge {
+    background: linear-gradient(135deg, #800000, #a33333);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7em;
+    margin-left: 10px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Panel CRUD Admin */
+.admin-crud-panel {
+    background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+    padding: 25px;
+    border-radius: 12px;
+    margin-top: 30px;
+    border: 2px solid #800000;
+    box-shadow: 0 4px 15px rgba(128, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-crud-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #800000, #a33333, #800000);
+}
+
+.admin-crud-panel h2 {
+    color: #800000;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-crud-panel h2 i {
+    color: #800000;
+}
+
+/* Form CRUD */
+.crud-form {
+    display: grid;
+    gap: 15px;
+}
+
+.crud-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2a0a0a;
+}
+
+.crud-form input, 
+.crud-form textarea, 
+.crud-form select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    transition: var(--transition);
+    background-color: #fff;
+}
+
+.crud-form input:focus, 
+.crud-form textarea:focus, 
+.crud-form select:focus {
+    outline: none;
+    border-color: #800000;
+    box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
+}
+
+.crud-form .form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.crud-form .form-row > div {
+    flex: 1;
+}
+
+/* Tombol Admin */
+.btn-primary {
+    background: linear-gradient(135deg, #800000, #a33333);
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    min-height: 44px;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #a33333, #800000);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(128, 0, 0, 0.2);
+}
+
+.btn-delete {
+    color: #dc3545;
+    text-decoration: none;
+    padding: 8px;
+    border-radius: 6px;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    min-width: 36px;
+}
+
+.btn-delete:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+    transform: scale(1.1);
+}
+
+/* Aksi Admin dalam List Kegiatan */
+.admin-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+    align-items: center;
+}
+
+.event-item.db-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: var(--transition);
+    border-left: 4px solid transparent;
+}
+
+.event-item.db-item:hover {
+    border-left-color: #800000;
+    transform: translateX(5px);
+}
+
+.event-item.db-item .date-tag {
+    background: #800000;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    min-width: 70px;
+    text-align: center;
+    margin-right: 15px;
+}
+
+.event-item.db-item .event-info {
+    flex-grow: 1;
+}
+
+.event-item.db-item .event-info h4 {
+    margin-bottom: 5px;
+    color: #2a0a0a;
+}
+
+.event-item.db-item .event-info p {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Indikator Edit Mode */
+.edit-mode-indicator {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #800000;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    z-index: 1001;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Responsif untuk Admin Panel */
+@media (max-width: 768px) {
+    .admin-crud-panel {
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .crud-form .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .admin-actions {
+        margin-left: 0;
+        margin-top: 10px;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .event-item.db-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .event-item.db-item .date-tag {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+}
+
+/* Animasi khusus untuk elemen admin */
+@keyframes adminPulse {
+    0% { box-shadow: 0 0 0 0 rgba(128, 0, 0, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(128, 0, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(128, 0, 0, 0); }
+}
+
+.admin-highlight {
+    animation: adminPulse 2s infinite;
+}
+
+/* Status indicator untuk form */
+.form-status {
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-weight: 600;
+    display: none;
+}
+
+.form-status.success {
+    background-color: rgba(34, 139, 34, 0.1);
+    color: #228B22;
+    border: 1px solid #228B22;
+    display: block;
+}
+
+.form-status.error {
+    background-color: rgba(204, 0, 0, 0.1);
+    color: #CC0000;
+    border: 1px solid #CC0000;
+    display: block;
+}
