@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <!-- Include Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-   <link rel="stylesheet" href="index.css">
+   <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
     <!-- Header Section -->
@@ -18,7 +18,7 @@
         <div class="container header__container">
             <div class="header__logo-container">
                 <img src="foto/logo-sekolah.jpg" alt="Logo Sekolah" class="header__logo">
-                <img src="foto/logo-osis.png" alt="Logo OSIS" class="header__logo">
+                <a href="login.php"><img src="foto/logo-osis.png" alt="Logo OSIS" class="header__logo"></a>
             </div>
             
             <nav class="nav">
@@ -213,6 +213,6 @@
     </footer>
 
     <!-- JavaScript -->
-   <script src="index.js"></script>
+   <script src="js/index.js"></script>
 </body>
 </html>

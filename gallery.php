@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle URL parameters
     handleUrlParams();
 });</script>
-  <link rel="stylesheet" href="gallery.css">
+  <link rel="stylesheet" href="css/gallery.css">
 </head>
 <body>
     <!-- Header Section -->
