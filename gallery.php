@@ -1,37 +1,60 @@
 <?php
+// Pastikan sesi dimulai di awal setiap file PHP
 session_start();
+// Include koneksi ke database
 include 'koneksi.php';
 
-// CEK SESSION DENGAN CARA YANG SAMA
+// ----------------------------------------------------------------------
+// --- LOGIKA PHP & DATA FETCHING ---
+// ----------------------------------------------------------------------
+
+// CEK STATUS USER: Tentukan apakah user yang sedang mengakses adalah Admin
+// Ini adalah cara yang benar dan ringkas untuk mengecek status admin.
 $is_admin = isset($_SESSION['level']) && $_SESSION['level'] == 'admin';
 
-// Ambil data foto dari database
+// Ambil semua data foto dari tabel `galeri`
+// Diurutkan berdasarkan tanggal upload terbaru, jika tanggal sama, diurutkan dari ID terbesar.
 $sql_galeri = "SELECT * FROM galeri ORDER BY tanggal_upload DESC, id DESC";
 $galeri_result = $koneksi->query($sql_galeri);
 
 $photos = [];
+// Cek apakah query berhasil dan ada data yang ditemukan
 if ($galeri_result && $galeri_result->num_rows > 0) {
+    // Ambil semua baris data dan masukkan ke array $photos
     while($row = $galeri_result->fetch_assoc()) {
         $photos[] = $row;
     }
 }
 
-// Tambahkan blok notifikasi sesi
+// ----------------------------------------------------------------------
+// --- LOGIKA NOTIFIKASI SESI ---
+// ----------------------------------------------------------------------
+
+// Siapkan variabel untuk menampung pesan notifikasi (sukses/error)
 $notification = '';
 if (isset($_SESSION['message'])) {
-    // Menggunakan class alert dari gallery.css
+    // Jika ada pesan sukses, tampilkan dengan class 'alert-success'
     $notification = '<div class="alert alert-success container" style="margin-top: var(--space-md);">' . $_SESSION['message'] . '</div>';
+    // Hapus pesan dari sesi setelah ditampilkan (agar tidak muncul lagi saat refresh)
     unset($_SESSION['message']);
 } elseif (isset($_SESSION['error'])) {
-    // Menggunakan class alert dari gallery.css
+    // Jika ada pesan error, tampilkan dengan class 'alert-error'
     $notification = '<div class="alert alert-error container" style="margin-top: var(--space-md);">' . $_SESSION['error'] . '</div>';
+    // Hapus pesan dari sesi
     unset($_SESSION['error']);
 }
 
-// Format URL untuk lightbox (jika diimplementasikan)
+// ----------------------------------------------------------------------
+// --- FUNGSI HELPER ---
+// ----------------------------------------------------------------------
+
+// Fungsi placeholder untuk URL Lightbox (bisa diisi logika Lightbox JS di masa depan)
 function get_lightbox_url($photo) {
-    return '#'; // Placeholder, karena lightbox JS belum ada. Di CSS class .gallery-item berfungsi sebagai trigger
+    return '#'; // Saat ini kita kasih placeholder saja
 }
+
+// Tutup koneksi database (opsional di sini, tapi bagus untuk housekeeping)
+$koneksi->close();
 
 ?>
 <!DOCTYPE html>
@@ -46,6 +69,7 @@ function get_lightbox_url($photo) {
     <link rel="stylesheet" href="css/gallery.css">
     </head>
 <body>
+    
     <header class="header">
         <div class="container header__container">
             <div class="header__logo-container">
@@ -58,6 +82,9 @@ function get_lightbox_url($photo) {
                 <a href="kalender.php" class="nav__link">Kalender Kegiatan</a>
                 <a href="gallery.php" class="nav__link active">Galeri</a> 
                 <a href="news.php" class="nav__link">Berita & Pengumuman</a>
+                <?php if ($is_admin): ?>
+                    <a href="logout.php" class="nav__link" style="color: #dc3545;">Logout <i class="fas fa-sign-out-alt"></i></a>
+                <?php endif; ?>
             </nav>
             <button class="mobile-menu-btn" aria-label="Toggle mobile menu">☰</button>
             <div class="nav-overlay"></div>
@@ -100,9 +127,10 @@ function get_lightbox_url($photo) {
         <div class="gallery-grid">
             <?php if (!empty($photos)): ?>
                 <?php foreach ($photos as $photo): ?>
-                    <div class="gallery-item" data-lightbox-url="<?= get_lightbox_url($photo) ?>" 
-                        data-title="<?= htmlspecialchars($photo['judul']) ?>" 
-                        data-caption="<?= htmlspecialchars($photo['keterangan']) ?>">
+                    <div class="gallery-item" 
+                         data-lightbox-url="<?= get_lightbox_url($photo) ?>" 
+                         data-title="<?= htmlspecialchars($photo['judul']) ?>" 
+                         data-caption="<?= htmlspecialchars($photo['keterangan']) ?>">
                         
                         <img src="<?= htmlspecialchars($photo['path_foto']) ?>" 
                              alt="<?= htmlspecialchars($photo['keterangan']) ?>" 
@@ -118,7 +146,7 @@ function get_lightbox_url($photo) {
                             <?php if ($is_admin): ?>
                             <div class="admin-actions" style="margin-top: 5px;">
                                 <a href="crud_galeri.php?action=hapus&id=<?= $photo['id'] ?>&file=<?= urlencode($photo['path_foto']) ?>" 
-                                   onclick="return confirm('Hapus foto ini dari galeri?')" 
+                                   onclick="return confirm('Yakin mau hapus foto ini dari galeri?')" 
                                    class="btn-primary btn-delete admin-control-btn danger" 
                                    style="padding: 5px 10px; font-size: 0.75rem;">
                                     <i class="fas fa-trash-alt"></i> Hapus
@@ -131,7 +159,7 @@ function get_lightbox_url($photo) {
             <?php else: ?>
                 <div class="empty-state" style="grid-column: 1 / -1;">
                     <i class="far fa-images"></i>
-                    <h3>Belum ada foto di galeri.</h3>
+                    <h3>Belum ada foto di galeri. 😔</h3>
                     <p>Silakan upload foto kegiatan untuk ditampilkan di sini.</p>
                 </div>
             <?php endif; ?>

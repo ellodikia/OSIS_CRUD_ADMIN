@@ -1,24 +1,33 @@
 <?php
-// Pastikan sesi dimulai
+// logout.php
+
+// 1. Pastikan sesi dimulai (selalu harus ada di awal)
 session_start();
 
-// Hancurkan semua variabel sesi
+// 2. Hancurkan semua variabel sesi
+// Ini akan menghapus data yang tersimpan di dalam $_SESSION (misal: 'username', 'level')
 $_SESSION = array();
 
-// Jika menggunakan cookie sesi, hapus juga cookie-nya
-// Catatan: Ini akan menghancurkan cookie sesi, bukan cookie biasa
+// 3. Hapus Cookie Sesi (opsional, tapi disarankan)
+// Ini adalah cara untuk menghapus cookie yang menyimpan ID sesi di browser pengguna.
 if (ini_get("session.use_cookies")) {
     $params = session_get_cookie_params();
-    setcookie(session_name(), '', time() - 42000,
-        $params["path"], $params["domain"],
-        $params["secure"], $params["httponly"]
+    setcookie(
+        session_name(), // Nama cookie sesi (biasanya PHPSESSID)
+        '',             // Nilai diubah menjadi kosong
+        time() - 42000, // Waktu kedaluwarsa diatur ke masa lalu (42000 detik yang lalu)
+        $params["path"],
+        $params["domain"],
+        $params["secure"],
+        $params["httponly"]
     );
 }
 
-// Terakhir, hancurkan sesi
+// 4. Hancurkan sesi di server
+// Ini akan menghapus file sesi di direktori penyimpanan sesi server
 session_destroy();
 
-// Arahkan kembali ke halaman login
+// 5. Arahkan kembali pengguna ke halaman login
 header("Location: login.php");
-exit;
+exit; // Selalu panggil exit setelah header Location
 ?>

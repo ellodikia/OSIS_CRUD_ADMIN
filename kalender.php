@@ -1,28 +1,50 @@
 <?php
+// kalender.php
 session_start();
-include 'koneksi.php';
+// Include koneksi database kita
+include 'koneksi.php'; 
 
-// PASTIKAN PENGEcekan SAMA DENGAN FILE LAIN
+// ----------------------------------------------------------------------
+// --- Cek Status Admin ---
+// ----------------------------------------------------------------------
+// Variabel untuk menentukan apakah user adalah admin
 $is_admin = isset($_SESSION['level']) && $_SESSION['level'] == 'admin';
 
+// ----------------------------------------------------------------------
+// --- Notifikasi CRUD ---
+// ----------------------------------------------------------------------
+$notification = '';
+if (isset($_SESSION['message'])) {
+    $notification = '<div class="alert alert-success container" style="margin-top: 20px;">' . $_SESSION['message'] . '</div>';
+    unset($_SESSION['message']);
+} elseif (isset($_SESSION['error'])) {
+    $notification = '<div class="alert alert-error container" style="margin-top: 20px;">' . $_SESSION['error'] . '</div>';
+    unset($_SESSION['error']);
+}
+
+// ----------------------------------------------------------------------
+// --- DATA FETCHING (Mengambil Data Kegiatan) ---
+// ----------------------------------------------------------------------
 // Ambil semua kegiatan yang belum lewat hari ini
 $sql_kegiatan = "SELECT * FROM kegiatan WHERE tanggal >= CURDATE() ORDER BY tanggal ASC";
 
+$events_data = [];
 try {
     $kegiatan_result = $koneksi->query($sql_kegiatan);
     
-    $events_data = [];
     if ($kegiatan_result) {
+        // Ambil data untuk PHP list dan siapkan untuk JSON JavaScript
         while($row = $kegiatan_result->fetch_assoc()) {
             $events_data[] = [
                 'id' => $row['id'],
-                'date' => date('j M', strtotime($row['tanggal'])), 
+                // Format tanggal untuk Kalender JS
+                'date' => date('Y-m-d', strtotime($row['tanggal'])), 
                 'title' => htmlspecialchars($row['judul']),
                 'time' => htmlspecialchars($row['waktu']),
                 'location' => htmlspecialchars($row['lokasi']),
                 'person' => htmlspecialchars($row['penanggung_jawab']),
                 'description' => htmlspecialchars($row['deskripsi']),
-                'preparations' => [htmlspecialchars($row['deskripsi'])] 
+                'preparations' => [htmlspecialchars($row['deskripsi'])] // Menggunakan deskripsi sebagai item persiapan
             ];
         }
     }
@@ -30,6 +52,11 @@ try {
     error_log("Database Error: " . $e->getMessage()); 
     $kegiatan_result = null;
     $events_data = [];
+}
+
+// Reset pointer result untuk ditampilkan di daftar kegiatan PHP
+if ($kegiatan_result) {
+    $kegiatan_result->data_seek(0);
 }
 
 // Konversi array PHP ke JSON untuk JavaScript
@@ -44,74 +71,43 @@ $events_json = json_encode($events_data);
     <title>Kalender Kegiatan OSIS Raksana</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/index.css"> 
     <link rel="stylesheet" href="css/kalender.css">
-    <style>
-        .admin-badge {
-            background: #800000;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 15px;
-            font-size: 0.7em;
-            margin-left: 10px;
-        }
-        .admin-crud-panel {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            border: 2px solid #800000;
-        }
-        .crud-form label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .crud-form input, .crud-form textarea {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .btn-delete {
-            color: #dc3545;
-            text-decoration: none;
-        }
-        .btn-primary {
-            background: #800000;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
+    
 </head>
 <body>
     <header class="header">
         <div class="container header__container">
             <div class="header__logo-container">
                 <img src="foto/logo-sekolah.jpg" alt="Logo Sekolah" class="header__logo">
-                <img src="foto/logo-osis.png" alt="Logo OSIS" class="header__logo">
+                <a href="<?= $is_admin ? 'index_admin.php' : 'login.php' ?>">
+                    <img src="foto/logo-osis.png" alt="Logo OSIS" class="header__logo">
+                </a>
             </div>
+            
             <nav class="nav">
-                <a href="index.php" class="nav__link">Beranda</a>
+                <a href="<?= $is_admin ? 'index_admin.php' : 'index.php' ?>" class="nav__link">Beranda</a>
                 <a href="struktur.php" class="nav__link">Struktur OSIS</a>
-                <a href="kalender.php" class="nav__link active">Kalender Kegiatan
+                <a href="kalender.php" class="nav__link active">Kalender Kegiatan</a>
                 <a href="gallery.php" class="nav__link">Galeri</a>
                 <a href="news.php" class="nav__link">Berita & Pengumuman</a>
-
-
+                <?php if ($is_admin): ?>
+                    <a href="logout.php" class="nav__link" style="color: #dc3545;">Logout <i class="fas fa-sign-out-alt"></i></a>
+                <?php endif; ?>
             </nav>
+            
             <button class="mobile-menu-btn" aria-label="Toggle mobile menu">☰</button>
             <div class="nav-overlay"></div>
         </div>
     </header>
-<?php if ($is_admin): ?>
 
-</div>
-<?php endif; ?>
+    <?= $notification ?>
+
     <main class="container">
+        <h1 class="page-title">Kalender Kegiatan OSIS Raksana 📅
+            <?php if($is_admin) echo '<span class="admin-badge"><i class="fas fa-user-shield"></i> Admin Mode</span>'; ?>
+        </h1>
+        
         <div class="clock">
             <p id="current-datetime"></p>
         </div>
@@ -125,41 +121,53 @@ $events_json = json_encode($events_data);
                 </div>
                 <div style="overflow-x: auto;">
                     <table>
-                        <tbody id="calendar-table"></tbody>
+                        <thead>
+                            <tr>
+                            </tr>
+                        </thead>
+                        <tbody id="calendar-table">
+                            </tbody>
                     </table>
                 </div>
             </div>
 
             <div class="events-container">
-                <h3>Daftar Kegiatan Mendatang <?php if($is_admin) echo '<span class="admin-badge">Admin</span>'; ?></h3>
+                
+                <h3>Daftar Kegiatan Mendatang 📝</h3>
+                
                 <ul class="events-list">
                 <?php 
                 if ($kegiatan_result && $kegiatan_result->num_rows > 0): 
-                    $kegiatan_result->data_seek(0);
                     while($row = $kegiatan_result->fetch_assoc()): 
                 ?>
                     <li class="event-item db-item">
                         <div class="date-tag"><?= date('d/m', strtotime($row['tanggal'])) ?></div>
                         <div class="event-info">
                             <h4><?= htmlspecialchars($row['judul']) ?></h4>
-                            <p><?= htmlspecialchars($row['lokasi']) ?> - PJ: <?= htmlspecialchars($row['penanggung_jawab']) ?></p>
+                            <p>
+                                <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($row['lokasi']) ?> 
+                                | PJ: <?= htmlspecialchars($row['penanggung_jawab']) ?>
+                            </p>
                         </div>
                         <?php if ($is_admin): ?>
                         <div class="admin-actions">
                             <a href="crud_kegiatan.php?action=hapus&id=<?= $row['id'] ?>" 
-                               onclick="return confirm('Hapus kegiatan ini?')" 
+                               onclick="return confirm('Apakah Anda yakin ingin menghapus kegiatan ini?')" 
                                class="btn-delete"><i class="fas fa-trash-alt"></i></a>
                         </div>
                         <?php endif; ?>
                     </li>
                 <?php endwhile; 
                 else: ?>
-                    <li>Tidak ada kegiatan mendatang di database.</li>
+                    <li style="text-align: center; padding: 15px; color: #777;">
+                        <i class="fas fa-check-circle"></i> Tidak ada kegiatan OSIS mendatang yang terjadwal.
+                    </li>
                 <?php endif; ?>
                 </ul>
-                <h3>Kegiatan Kalender (<span id="current-month-events"></span>)</h3>
+                
+                <h3 style="margin-top: 30px;">Detail Kegiatan Bulan (<span id="current-month-events"></span>)</h3>
                 <ul id="events-list" class="events-list">
-                </ul>
+                    </ul>
             </div>
         </div>
         
@@ -197,65 +205,64 @@ $events_json = json_encode($events_data);
         </section>
         <?php endif; ?>
     </main>
-
+    
     <script src="js/kalender.js"></script>
     <script>
+        // Data kegiatan dari PHP di-inject ke JavaScript
+        const eventsData = <?= $events_json ?>;
+
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("Kegiatan dari database dimuat:", <?= $events_json ?>);
+            // Inisialisasi kalender dengan data kegiatan dari database
+            if (typeof initCalendar === 'function') {
+                initCalendar(eventsData); 
+            } else {
+                console.error('Fungsi initCalendar belum dimuat.');
+            }
         });
     </script>
-    <script>// Enhanced admin functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Highlight admin elements
-    if (<?= $is_admin ? 'true' : 'false' ?>) {
-        // Add admin class to body for global styling
-        document.body.classList.add('admin-mode');
-        
-        // Add confirmation for delete actions
-        const deleteLinks = document.querySelectorAll('.btn-delete');
-        deleteLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                if (!confirm('Apakah Anda yakin ingin menghapus kegiatan ini? Tindakan ini tidak dapat dibatalkan.')) {
-                    e.preventDefault();
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cek apakah user adalah admin
+            if (<?= $is_admin ? 'true' : 'false' ?>) {
+                // Tambahkan konfirmasi untuk aksi hapus
+                const deleteLinks = document.querySelectorAll('.btn-delete');
+                deleteLinks.forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        if (!confirm('Apakah Anda yakin ingin menghapus kegiatan ini? Tindakan ini tidak dapat dibatalkan.')) {
+                            e.preventDefault();
+                        }
+                    });
+                });
+                
+                // Form validation sederhana
+                const adminForm = document.querySelector('.crud-form');
+                if (adminForm) {
+                    adminForm.addEventListener('submit', function(e) {
+                        const judul = document.getElementById('judul_k').value.trim();
+                        const tanggal = document.getElementById('tanggal').value;
+                        
+                        if (!judul || !tanggal) {
+                            e.preventDefault();
+                            alert('Judul dan Tanggal kegiatan harus diisi!');
+                            return;
+                        }
+                        
+                        // Menampilkan loading state saat submit
+                        const submitBtn = adminForm.querySelector('button[type="submit"]');
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+                        submitBtn.disabled = true;
+                        
+                        // Revert loading state (jika terjadi error client-side atau sebagai fallback)
+                        setTimeout(() => {
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.disabled = false;
+                        }, 5000); 
+                    });
                 }
-            });
+            }
         });
-        
-        // Form validation enhancement
-        const adminForm = document.querySelector('.crud-form');
-        if (adminForm) {
-            adminForm.addEventListener('submit', function(e) {
-                const judul = document.getElementById('judul_k').value.trim();
-                const tanggal = document.getElementById('tanggal').value;
-                
-                if (!judul) {
-                    e.preventDefault();
-                    alert('Judul kegiatan harus diisi!');
-                    document.getElementById('judul_k').focus();
-                    return;
-                }
-                
-                if (!tanggal) {
-                    e.preventDefault();
-                    alert('Tanggal kegiatan harus diisi!');
-                    document.getElementById('tanggal').focus();
-                    return;
-                }
-                
-                // Show loading state
-                const submitBtn = adminForm.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
-                submitBtn.disabled = true;
-                
-                // Revert after 3 seconds if still processing
-                setTimeout(() => {
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                }, 3000);
-            });
-        }
-    }
-});</script>
+    </script>
 </body>
 </html>

@@ -1,90 +1,60 @@
 <?php
+// index_admin.php
 session_start();
+// Jangan lupa include koneksi database kita
+include 'koneksi.php';
 
-// PERIKSA APAKAH USER SUDAH LOGIN SEBAGAI ADMIN
+// ----------------------------------------------------------------------
+// --- PROTEKSI AKSES: Hanya ADMIN yang boleh masuk! ---
+// ----------------------------------------------------------------------
+// Cek apakah user sudah login dan levelnya benar-benar 'admin'.
+// Kalau tidak, tendang balik ke halaman login.
 if (!isset($_SESSION['level']) || $_SESSION['level'] !== 'admin') {
     header("Location: login.php");
     exit;
 }
 
-include 'koneksi.php';
+// ----------------------------------------------------------------------
+// --- DATA FETCHING (Mengambil Data) ---
+// ----------------------------------------------------------------------
 
-// Ambil Berita (limit 3)
+// Ambil 3 Berita terbaru (level='berita') untuk ditampilkan di dashboard
 $sql_berita = "SELECT * FROM berita WHERE level='berita' ORDER BY tanggal_publikasi DESC LIMIT 3";
 $berita_result = $koneksi->query($sql_berita);
 
-// Ambil Pengumuman (limit 3)
+// Ambil 3 Pengumuman terbaru (level='pengumuman')
+// Meskipun di kode awal ini tidak digunakan, kita tetap ambil datanya.
 $sql_pengumuman = "SELECT * FROM berita WHERE level='pengumuman' ORDER BY tanggal_publikasi DESC LIMIT 3";
 $pengumuman_result = $koneksi->query($sql_pengumuman);
-?>   
+
+// Ambil notifikasi dari sesi (sukses/error dari crud_berita.php)
+$notification = '';
+if (isset($_SESSION['message'])) {
+    $notification = '<div class="alert alert-success container" style="margin-top: 20px;">' . $_SESSION['message'] . '</div>';
+    unset($_SESSION['message']);
+} elseif (isset($_SESSION['error'])) {
+    $notification = '<div class="alert alert-error container" style="margin-top: 20px;">' . $_SESSION['error'] . '</div>';
+    unset($_SESSION['error']);
+}
+
+$koneksi->close(); // Tutup koneksi setelah selesai ambil data
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSIS Raksana - Admin</title>
+    <title>OSIS Raksana - Admin Panel</title>
     <link rel="icon" type="image/png" href="foto/logo-osis.png">
     
-    <!-- Include Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <!-- Include Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="css/index.css">
-    <style>
-        .admin-badge {
-            background: #800000;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            margin-left: 10px;
-        }
-        .btn-delete {
-            background: #dc3545;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 0.8em;
-            margin-left: 10px;
-        }
-        .btn-delete:hover {
-            background: #c82333;
-        }
-        .crud-form {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border: 2px solid #800000;
-        }
-        .crud-form label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .crud-form input, .crud-form textarea, .crud-form select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .btn-primary {
-            background: #800000;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .btn-primary:hover {
-            background: #a00000;
-        }
-    </style>
+    <link rel="stylesheet" href="css/index_admin.css">
+    
+    
 </head>
 <body>
-    <!-- Header Section -->
+    
     <header class="header">
         <div class="container header__container">
             <div class="header__logo-container">
@@ -93,12 +63,12 @@ $pengumuman_result = $koneksi->query($sql_pengumuman);
             </div>
             
             <nav class="nav">
-                <a href="index_admin.php" class="nav__link">Beranda</a>
+                <a href="index_admin.php" class="nav__link active">Beranda (Admin)</a>
                 <a href="struktur.php" class="nav__link">Struktur OSIS</a>
                 <a href="kalender.php" class="nav__link">Kalender Kegiatan</a>
-                <a href="gallery.php" class="nav__link active">Galeri</a>
+                <a href="gallery.php" class="nav__link">Galeri</a>
                 <a href="news.php" class="nav__link">Berita & Pengumuman</a>
-                <a href="logout.php" class="nav__link">Logout</a>
+                <a href="logout.php" class="nav__link logout-btn">Logout <i class="fas fa-sign-out-alt"></i></a>
             </nav>
             
             <button class="mobile-menu-btn" aria-label="Toggle mobile menu">☰</button>
@@ -106,163 +76,179 @@ $pengumuman_result = $koneksi->query($sql_pengumuman);
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container hero__content">
-            <h1 class="hero__title">Selamat Datang di Website OSIS - Admin Panel</h1>
-            <p class="hero__description">Anda login sebagai Administrator. Mode CRUD aktif.</p>
-            <a href="#main-content" class="btn btn--primary">Kelola Konten</a>
-        </div>
-    </section>
-<!-- News Section dengan Style Admin -->
-<section class="section">
-    <div class="container">
-        <h2 class="section__title">
-            Berita Terkini 
-            <span class="admin-badge"><i class="fas fa-user-shield"></i> Admin Mode</span>
-        </h2>
-        
-        <!-- Admin Controls -->
-        <div class="admin-controls">
-            <a href="#crud-form" class="admin-control-btn">
-            </a>
-            <a href="news.php" class="admin-control-btn">
-            </a>
-        </div>
-        
-        <div class="news-grid admin-mode">
-            <?php while($row = $berita_result->fetch_assoc()): ?>
-            <article class="news-card">
-                <span class="news-card__type">
-                    <?= $row['level'] === 'berita' ? '' : '📢 Pengumuman' ?>
-                </span>
+    
+    
+    <main id="main-content">
+    
+    <?= $notification ?>
+
+    <section class="section">
+        <div class="container">
+            <h2 class="section__title">
+                Berita & Pengumuman Terbaru 
+                <span class="admin-badge"><i class="fas fa-user-shield"></i> Admin Mode</span>
+            </h2>
+            
+            <div class="admin-controls" style="margin-bottom: 20px;">
+                <a href="#crud-form" class="btn-primary" style="text-decoration: none; margin-right: 10px;"><i class="fas fa-plus-circle"></i> Tambah Konten</a>
+                <a href="news.php" class="btn-primary" style="background: #17a2b8; text-decoration: none;"><i class="fas fa-search"></i> Lihat Semua Konten</a>
+            </div>
+            
+            <div class="news-grid admin-mode">
                 
-                <?php if(!empty($row['foto'])): ?>
-                    <img src="uploads/berita/<?= htmlspecialchars($row['foto']) ?>" 
-                         alt="<?= htmlspecialchars($row['judul']) ?>" 
-                         class="news-card__image">
-                <?php else: ?>
-                    <img src="foto/1.jpg" 
-                         alt="Default Image" 
-                         class="news-card__image">
+                <?php 
+                // Kita gabungkan hasil berita dan pengumuman untuk ditampilkan bersama
+                $combined_results = array_merge(
+                    ($berita_result->num_rows > 0) ? $berita_result->fetch_all(MYSQLI_ASSOC) : [],
+                    ($pengumuman_result->num_rows > 0) ? $pengumuman_result->fetch_all(MYSQLI_ASSOC) : []
+                );
+                
+                // Urutkan ulang berdasarkan tanggal publikasi DESC (jika perlu, walaupun query sudah mengurutkan)
+                usort($combined_results, function($a, $b) {
+                    return strtotime($b['tanggal_publikasi']) - strtotime($a['tanggal_publikasi']);
+                });
+
+                // Tampilkan maksimal 6 item gabungan (jika ada)
+                $counter = 0;
+                foreach ($combined_results as $row):
+                    if ($counter >= 6) break; // Batasi tampilan agar tidak terlalu panjang
+                    $counter++;
+                ?>
+                <article class="news-card">
+                    <span class="news-card__type" style="background: <?= $row['level'] === 'pengumuman' ? '#ffc107' : '#28a745'; ?>;">
+                        <?= $row['level'] === 'pengumuman' ? '📢 Pengumuman' : '📰 Berita' ?>
+                    </span>
+                    
+                    <?php 
+                    // Tampilkan foto jika ada, kalau tidak ada pakai foto default
+                    $foto_path = !empty($row['foto']) ? "foto_berita/" . htmlspecialchars($row['foto']) : "foto/1.jpg"; 
+                    ?>
+                    <img src="<?= $foto_path ?>" 
+                          alt="<?= htmlspecialchars($row['judul']) ?>" 
+                          class="news-card__image">
+                    
+                    <div class="news-card__content">
+                        <span class="news-card__date">
+                            <i class="fas fa-calendar-alt"></i> 
+                            <?= date('d F Y', strtotime($row['tanggal_publikasi'])) ?>
+                        </span>
+                        <h3 class="news-card__title"><?= htmlspecialchars($row['judul']) ?></h3>
+                        <p class="news-card__excerpt">
+                            <?= nl2br(htmlspecialchars(substr($row['isi'], 0, 150))) ?>...
+                        </p>
+                        
+                        <div class="news-card__actions" style="margin-top: 10px;">
+                            <a href="edit_berita.php?id=<?= $row['id'] ?>" class="btn-primary" style="background: #17a2b8; text-decoration: none; padding: 5px 10px; font-size: 0.8em;">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="crud_berita.php?action=hapus&id=<?= $row['id'] ?>" 
+                               onclick="return confirm('Yakin ingin menghapus konten ini? Tindakan ini tidak bisa dibatalkan!')" 
+                               class="news-card__btn news-card__btn--danger" style="margin-left: 5px;">
+                                <i class="fas fa-trash-alt"></i> Hapus
+                            </a>
+                        </div>
+                    </div>
+                </article>
+                <?php endforeach; ?>
+                
+                <?php if (empty($combined_results)): ?>
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 30px; border: 1px dashed #ddd;">
+                        <i class="fas fa-box-open" style="font-size: 2em; color: #aaa;"></i>
+                        <p>Belum ada konten Berita atau Pengumuman yang tersimpan.</p>
+                    </div>
                 <?php endif; ?>
                 
-                <div class="news-card__content">
-                    <span class="news-card__date">
-                        <i class="fas fa-calendar-alt"></i> 
-                        <?= date('d F Y', strtotime($row['tanggal_publikasi'])) ?>
-                    </span>
-                    <h3 class="news-card__title"><?= htmlspecialchars($row['judul']) ?></h3>
-                    <p class="news-card__excerpt">
-                        <?= nl2br(htmlspecialchars(substr($row['isi'], 0, 150))) ?>...
-                    </p>
-                    
-                    <div class="news-card__actions">
-                        <a href="news.php?id=<?= $row['id'] ?>" class="news-card__btn news-card__btn--primary">
-                        </a>
-                        <a href="crud_berita.php?action=edit&id=<?= $row['id'] ?>" class="news-card__btn" style="background: #ffc107; color: black;">
-                        </a>
-                        <a href="crud_berita.php?action=hapus&id=<?= $row['id'] ?>" 
-                           onclick="return confirm('Yakin ingin menghapus berita ini?')" 
-                           class="news-card__btn news-card__btn--danger">
-                            <i class="fas fa-trash-alt"></i> Hapus
-                        </a>
-                    </div>
-                </div>
-            </article>
-            <?php endwhile; ?>
-        </div>
-        
-        <!-- CRUD Form dengan Upload Foto -->
-        <div class="crud-form" id="crud-form">
-            <h3><i class="fas fa-plus-circle"></i> Tambah Konten Baru</h3>
-            <form action="crud_berita.php" method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="action" value="tambah_berita">
-                
-                <div class="form-group">
-                    <label for="judul"><i class="fas fa-heading"></i> Judul:</label>
-                    <input type="text" id="judul" name="judul" class="form-control" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="isi"><i class="fas fa-align-left"></i> Isi Konten:</label>
-                    <textarea id="isi" name="isi" class="form-control" rows="5" required></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="foto"><i class="fas fa-image"></i> Upload Foto:</label>
-                    <input type="file" id="foto" name="foto" class="form-control" accept="image/*">
-                    <small class="form-text">Format: JPG, PNG, GIF. Maksimal 2MB</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="level"><i class="fas fa-tag"></i> Jenis Konten:</label>
-                    <select id="level" name="level" class="form-control" required>
-                        <option value="berita">📰 Berita Terkini</option>
-                        <option value="pengumuman">📢 Pengumuman Penting</option>
-                    </select>
-                </div>
-                
-                <button type="submit" class="btn-primary">
-                    <i class="fas fa-save"></i> Simpan Konten
-                </button>
-            </form>
-        </div>
-    </div>
-</section>
-        
-        <!-- Quick Links Section -->
-        <section class="section">
-            <div class="container">
-                <h2 class="section__title">Menu Cepat</h2>
-                <div class="quick-links">
-                    <a href="struktur.php" class="quick-link-card">
-                        <div class="quick-link-card__icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <h3 class="quick-link-card__title">Profil OSIS</h3>
-                        <p class="quick-link-card__description">Kenali struktur dan program kerja OSIS kami</p>
-                    </a>
-                    
-                    <a href="kalender.php" class="quick-link-card">
-                        <div class="quick-link-card__icon">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <h3 class="quick-link-card__title">Kalender Kegiatan</h3>
-                        <p class="quick-link-card__description">Kelola jadwal kegiatan OSIS</p>
-                    </a>
-                    
-                    <a href="gallery.php" class="quick-link-card">
-                        <div class="quick-link-card__icon">
-                            <i class="fas fa-images"></i>
-                        </div>
-                        <h3 class="quick-link-card__title">Galeri Foto</h3>
-                        <p class="quick-link-card__description">Kelola galeri kegiatan OSIS</p>
-                    </a>
-                    
-                    <a href="news.php" class="quick-link-card">
-                        <div class="quick-link-card__icon">
-                            <i class="fas fa-newspaper"></i>
-                        </div>
-                        <h3 class="quick-link-card__title">Berita & Pengumuman</h3>
-                        <p class="quick-link-card__description">Kelola berita dan pengumuman</p>
-                    </a>
-                </div>
             </div>
-        </section>
+            
+            
+            
+            <div class="crud-form" id="crud-form">
+                <h3><i class="fas fa-plus-circle"></i> Tambah Berita / Pengumuman Baru</h3>
+                <form action="crud_berita.php" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="tambah_berita">
+                    
+                    <div class="form-group">
+                        <label for="judul"><i class="fas fa-heading"></i> Judul:</label>
+                        <input type="text" id="judul" name="judul" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="isi"><i class="fas fa-align-left"></i> Isi Konten:</label>
+                        <textarea id="isi" name="isi" class="form-control" rows="5" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="foto_berita"><i class="fas fa-image"></i> Upload Foto:</label>
+                        <input type="file" id="foto_berita" name="foto_berita" class="form-control" accept="image/*">
+                        <small class="form-text">Format: JPG, PNG, GIF. Foto ini akan disimpan di folder `foto_berita/`</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="level"><i class="fas fa-tag"></i> Jenis Konten:</label>
+                        <select id="level" name="level" class="form-control" required>
+                            <option value="berita">📰 Berita Terkini</option>
+                            <option value="pengumuman">📢 Pengumuman Penting</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Simpan Konten
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+        
+    ---
+    
+    <section class="section">
+        <div class="container">
+            <h2 class="section__title">Menu Cepat Administrasi</h2>
+            <div class="quick-links">
+                <a href="struktur.php" class="quick-link-card" style="background: #ffe0e0;">
+                    <div class="quick-link-card__icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="quick-link-card__title">Kelola Pengurus</h3>
+                    <p class="quick-link-card__description">Tambah, edit, atau hapus data struktur pengurus OSIS</p>
+                </a>
+                
+                <a href="kalender.php" class="quick-link-card" style="background: #e0f7ff;">
+                    <div class="quick-link-card__icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3 class="quick-link-card__title">Kelola Kegiatan</h3>
+                    <p class="quick-link-card__description">Tambah, edit, atau hapus jadwal kegiatan OSIS</p>
+                </a>
+                
+                <a href="gallery.php" class="quick-link-card" style="background: #e0ffe0;">
+                    <div class="quick-link-card__icon">
+                        <i class="fas fa-images"></i>
+                    </div>
+                    <h3 class="quick-link-card__title">Kelola Galeri Foto</h3>
+                    <p class="quick-link-card__description">Upload dan hapus foto kegiatan di galeri</p>
+                </a>
+                
+                <a href="news.php" class="quick-link-card" style="background: #fff8e0;">
+                    <div class="quick-link-card__icon">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <h3 class="quick-link-card__title">Lihat Semua Konten</h3>
+                    <p class="quick-link-card__description">Lihat daftar lengkap semua berita dan pengumuman</p>
+                </a>
+            </div>
+        </div>
+    </section>
     </main>
 
-    <!-- Footer Section -->
     <footer class="footer">
         <div class="container">
             <div class="footer__content">
-                <!-- About Column -->
                 <div class="footer__column">
                     <h3>Tentang OSIS</h3>
                     <p>Organisasi Siswa Intra Sekolah (OSIS) merupakan organisasi resmi sekolah yang bertujuan untuk mengembangkan potensi siswa dan menyalurkan aspirasi siswa.</p>
                 </div>
                 
-                <!-- Contact Column -->
                 <div class="footer__column">
                     <h3>Kontak Kami</h3>
                     <div class="contact-info">
@@ -277,7 +263,6 @@ $pengumuman_result = $koneksi->query($sql_pengumuman);
                     </div>
                 </div>
                 
-                <!-- Social Media Column -->
                 <div class="footer__column">
                     <h3>Media Sosial</h3>
                     <p>Ikuti kami di media sosial untuk informasi terbaru</p>
@@ -289,12 +274,11 @@ $pengumuman_result = $koneksi->query($sql_pengumuman);
             </div>
             
             <div class="copyright">
-                <p>&copy; 2025 OSIS Yayasan Pendidikan Raksana. Semua Hak Cipta Dilindungi. | <strong>Admin Mode</strong></p>
+                <p>&copy; 2025 OSIS Yayasan Pendidikan Raksana. Semua Hak Cipta Dilindungi. | **Admin Mode**</p>
             </div>
         </div>
     </footer>
 
-    <!-- JavaScript -->
     <script src="js/index.js"></script>
 </body>
 </html>

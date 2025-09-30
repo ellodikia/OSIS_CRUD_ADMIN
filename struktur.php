@@ -1,16 +1,31 @@
 <?php
+// struktur.php
 session_start();
 include 'koneksi.php';
 
-// Cek status admin
+// ----------------------------------------------------------------------
+// --- Cek Status Admin & Notifikasi CRUD ---
+// ----------------------------------------------------------------------
 $is_admin = isset($_SESSION['level']) && $_SESSION['level'] == 'admin';
+
+$notification = '';
+if (isset($_SESSION['message'])) {
+    $notification = '<div class="alert alert-success container" style="margin-top: 20px;">' . $_SESSION['message'] . '</div>';
+    unset($_SESSION['message']);
+} elseif (isset($_SESSION['error'])) {
+    $notification = '<div class="alert alert-error container" style="margin-top: 20px;">' . $_SESSION['error'] . '</div>';
+    unset($_SESSION['error']);
+}
+
+// ----------------------------------------------------------------------
+// --- DATA FETCHING & FILTERING ---
+// ----------------------------------------------------------------------
 
 // Ambil semua data pengurus
 $sql_pengurus = "SELECT * FROM pengurus ORDER BY id ASC";
 $pengurus_result = $koneksi->query($sql_pengurus);
 
-// --- Filtering Data Berdasarkan Jabatan ---
-$data_pengurus = [];
+$data_pengurus = []; // Semua data untuk modal
 $data_pembina = [];
 $data_ketua_wakil = [];
 $data_bph = [];
@@ -18,20 +33,17 @@ $data_departemen = [];
 
 if ($pengurus_result) {
     while ($row = $pengurus_result->fetch_assoc()) {
-        $data_pengurus[] = $row; // Menyimpan semua data untuk looping modal
+        $data_pengurus[] = $row; 
 
-        $jabatan = trim(strtolower($row['jabatan']));
+        $jabatan_lower = trim(strtolower($row['jabatan']));
 
-        if (strpos($jabatan, 'pembina') !== false) {
+        if (strpos($jabatan_lower, 'pembina') !== false) {
             $data_pembina[] = $row;
-        } elseif (strpos($jabatan, 'ketua osis') !== false || strpos($jabatan, 'wakil ketua osis') !== false) {
-            // Memfilter Ketua dan Wakil Ketua
+        } elseif (strpos($jabatan_lower, 'ketua osis') !== false || strpos($jabatan_lower, 'wakil ketua osis') !== false) {
             $data_ketua_wakil[] = $row;
-        } elseif (strpos($jabatan, 'sekretaris') !== false || strpos($jabatan, 'bendahara') !== false) {
-            // Memfilter BPH: Sekretaris, Wakil Sekretaris, Bendahara
+        } elseif (strpos($jabatan_lower, 'sekretaris') !== false || strpos($jabatan_lower, 'bendahara') !== false) {
             $data_bph[] = $row;
         } else {
-            // Semua posisi lain dianggap Departemen
             $data_departemen[] = $row;
         }
     }
@@ -41,13 +53,15 @@ if ($pengurus_result) {
 $departemen_grouped = [];
 foreach ($data_departemen as $dep) {
     $title = $dep['jabatan'];
-    // Coba identifikasi judul departemen utama (misalnya: 'Keimanan', 'Kreativitas', dll.)
-    // Ini mengasumsikan teks 'jabatan' mengandung judul departemen.
     $group_key = $title; 
     
-    // Logika pengelompokan yang lebih spesifik berdasarkan judul utama:
+    // Logika pengelompokan yang lebih fleksibel berdasarkan judul utama Departemen (misal: "Koordinator Dep. A" dan "Anggota Dep. A" masuk grup "Dep. A")
     if (preg_match('/(Keimanan dan Ketakwaan TYME|Kreativitas Sastra dan Budaya|Bahasa Asing|Kesehatan, Gizi dan Lingkungan|Prestasi Akademik dan Olahraga|Humas dan Infokum|Pengamanan Strategis Setiap Unit)/i', $title, $matches)) {
+        // Ambil nama departemen utama dari regex
         $group_key = $matches[0];
+    } else {
+        // Jika tidak cocok, ambil 1-2 kata pertama dari jabatan
+        $group_key = implode(' ', array_slice(explode(' ', $title), 0, 2));
     }
     
     if (!isset($departemen_grouped[$group_key])) {
@@ -55,6 +69,7 @@ foreach ($data_departemen as $dep) {
     }
     $departemen_grouped[$group_key][] = $dep;
 }
+$koneksi->close(); 
 ?>
 
 <!DOCTYPE html>
@@ -64,25 +79,30 @@ foreach ($data_departemen as $dep) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Struktur OSIS Raksana</title>
     <link rel="icon" type="image/png" href="foto/logo-osis.png">
-    <link rel="stylesheet" href="css/struktur.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/index.css"> 
+    <link rel="stylesheet" href="css/struktur.css">
 </head>
 <body>
     <header class="header">
         <div class="container header__container">
             <div class="header__logo-container">
                 <img src="foto/logo-sekolah.jpg" alt="Logo Sekolah" class="header__logo">
-                <img src="foto/logo-osis.png" alt="Logo OSIS" class="header__logo">
+                <a href="<?= $is_admin ? 'index_admin.php' : 'login.php' ?>">
+                    <img src="foto/logo-osis.png" alt="Logo OSIS" class="header__logo">
+                </a>
             </div>
             
             <nav class="nav">
-                <a href="index.php" class="nav__link">Beranda</a>
-                <a href="struktur.php" class="nav__link">Struktur OSIS</a>
+                <a href="<?= $is_admin ? 'index_admin.php' : 'index.php' ?>" class="nav__link">Beranda</a>
+                <a href="struktur.php" class="nav__link active">Struktur OSIS</a>
                 <a href="kalender.php" class="nav__link">Kalender Kegiatan</a>
                 <a href="gallery.php" class="nav__link">Galeri</a>
                 <a href="news.php" class="nav__link">Berita & Pengumuman</a>
-
+                <?php if ($is_admin): ?>
+                    <a href="logout.php" class="nav__link" style="color: #dc3545;">Logout <i class="fas fa-sign-out-alt"></i></a>
+                <?php endif; ?>
             </nav>
             
             <button class="mobile-menu-btn" aria-label="Toggle mobile menu">☰</button>
@@ -90,49 +110,49 @@ foreach ($data_departemen as $dep) {
         </div>
     </header>
 
+    <?= $notification ?>
+
     <main class="container struktur">
-        <h1 class="title">Struktur Pengurus OSIS</h1>
+        <h1 class="title">Struktur Pengurus OSIS Raksana 🧑‍🤝‍🧑</h1>
 
         <?php if ($is_admin): ?>
-        <section class="section admin-crud-panel" style="margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
-            <div class="container">
-                <h2>Tambah Pengurus Baru <i class="fas fa-user-plus"></i></h2>
-                <form action="crud_pengurus.php" method="POST" enctype="multipart/form-data" class="crud-form">
-                    <input type="hidden" name="action" value="tambah_pengurus">
-                    
-                    <label for="nama">Nama Lengkap:</label>
-                    <input type="text" id="nama" name="nama" required>
-                    
-                    <label for="jabatan">Jabatan:</label>
-                    <input type="text" id="jabatan" name="jabatan" placeholder="Contoh: Ketua OSIS, Sekretaris, Koordinator Dep. Keimanan" required>
-                    
-                    <label for="foto">Foto Profil (Max 2MB):</label>
-                    <input type="file" id="foto" name="foto" accept="image/*" required>
+        <section class="admin-crud-panel">
+            <h2>Tambah Pengurus Baru <i class="fas fa-user-plus"></i></h2>
+            <form action="crud_pengurus.php" method="POST" enctype="multipart/form-data" class="crud-form">
+                <input type="hidden" name="action" value="tambah_pengurus">
+                
+                <label for="nama">Nama Lengkap:</label>
+                <input type="text" id="nama" name="nama" required>
+                
+                <label for="jabatan">Jabatan:</label>
+                <input type="text" id="jabatan" name="jabatan" placeholder="Contoh: Ketua OSIS, Sekretaris, Koordinator Dep. Keimanan" required>
+                
+                <label for="foto">Foto Profil (Max 2MB):</label>
+                <input type="file" id="foto" name="foto" accept="image/*" required>
 
-                    <label for="visi_misi">Visi/Misi/Tugas (Detail Modal):</label>
-                    <textarea id="visi_misi" name="visi_misi" rows="5" required></textarea>
-                    
-                    <button type="submit" class="btn btn-primary" style="background-color: #800000; color: white;"><i class="fas fa-save"></i> Simpan Pengurus</button>
-                </form>
-            </div>
+                <label for="visi_misi">Visi/Misi/Tugas (Detail Modal):</label>
+                <textarea id="visi_misi" name="visi_misi" rows="5" required></textarea>
+                
+                <button type="submit" class="btn btn-primary" style="background-color: #800000; color: white;"><i class="fas fa-save"></i> Simpan Pengurus</button>
+            </form>
         </section>
         <?php endif; ?>
-
+        
         <section class="struktur-section">
-            <h2>Pembina OSIS</h2>
+            <h2><i class="fas fa-user-tie"></i> Pembina OSIS</h2>
             <div class="card-container">
             <?php if (count($data_pembina) > 0): ?>
                 <?php foreach ($data_pembina as $row): 
-                    $foto_path = empty($row['foto']) ? 'https://via.placeholder.com/140x140?text=Foto+Pembina' : 'uploads/pengurus/' . $row['foto'];
+                    $foto_path = empty($row['foto']) ? 'https://via.placeholder.com/140x140?text=Foto+Pembina' : 'uploads/pengurus/' . htmlspecialchars($row['foto']);
                 ?>
-                <div class="card clickable" data-modal="pengurus-<?= $row['id'] ?>">
-                    <img src="<?= htmlspecialchars($foto_path) ?>" alt="<?= htmlspecialchars($row['nama']) ?>" onerror="this.src='https://via.placeholder.com/140x140?text=Foto+Pembina'">
+                <div class="card clickable" data-modal="modal-pengurus-<?= $row['id'] ?>">
+                    <img src="<?= $foto_path ?>" alt="<?= htmlspecialchars($row['nama']) ?>" onerror="this.src='https://via.placeholder.com/140x140?text=Foto+Pembina'">
                     <h3><?= htmlspecialchars($row['nama']) ?></h3>
                     <p><?= htmlspecialchars($row['jabatan']) ?></p>
                     <?php if ($is_admin): ?>
                     <div class="admin-actions mt-2">
                         <a href="crud_pengurus.php?action=hapus&id=<?= $row['id'] ?>" 
-                           onclick="return confirm('Yakin ingin menghapus <?= $row['nama'] ?>?')" 
+                           onclick="return confirm('Yakin ingin menghapus <?= htmlspecialchars($row['nama']) ?>?')" 
                            class="btn btn-sm btn-delete" style="color: red;"><i class="fas fa-trash-alt"></i> Hapus</a>
                     </div>
                     <?php endif; ?>
@@ -143,22 +163,22 @@ foreach ($data_departemen as $dep) {
             <?php endif; ?>
             </div>
         </section>
-
+        
         <section class="struktur-section">
-            <h2>Ketua & Wakil Ketua OSIS</h2>
+            <h2><i class="fas fa-crown"></i> Ketua & Wakil Ketua OSIS</h2>
             <div class="grid">
             <?php if (count($data_ketua_wakil) > 0): ?>
                 <?php foreach ($data_ketua_wakil as $row): 
-                    $foto_path = empty($row['foto']) ? 'https://via.placeholder.com/140x140?text=Foto+Ketua' : 'uploads/pengurus/' . $row['foto'];
+                    $foto_path = empty($row['foto']) ? 'https://via.placeholder.com/140x140?text=Foto+Ketua' : 'uploads/pengurus/' . htmlspecialchars($row['foto']);
                 ?>
-                <div class="card clickable" data-modal="pengurus-<?= $row['id'] ?>">
-                    <img src="<?= htmlspecialchars($foto_path) ?>" alt="<?= htmlspecialchars($row['nama']) ?>" onerror="this.src='https://via.placeholder.com/140x140?text=Foto+BPH'">
+                <div class="card clickable" data-modal="modal-pengurus-<?= $row['id'] ?>">
+                    <img src="<?= $foto_path ?>" alt="<?= htmlspecialchars($row['nama']) ?>" onerror="this.src='https://via.placeholder.com/140x140?text=Foto+BPH'">
                     <h3><?= htmlspecialchars($row['nama']) ?></h3>
                     <p><?= htmlspecialchars($row['jabatan']) ?></p>
                     <?php if ($is_admin): ?>
                     <div class="admin-actions mt-2">
                         <a href="crud_pengurus.php?action=hapus&id=<?= $row['id'] ?>" 
-                           onclick="return confirm('Yakin ingin menghapus <?= $row['nama'] ?>?')" 
+                           onclick="return confirm('Yakin ingin menghapus <?= htmlspecialchars($row['nama']) ?>?')" 
                            class="btn btn-sm btn-delete" style="color: red;"><i class="fas fa-trash-alt"></i> Hapus</a>
                     </div>
                     <?php endif; ?>
@@ -171,20 +191,20 @@ foreach ($data_departemen as $dep) {
         </section>
 
         <section class="struktur-section">
-            <h2>Badan Pengurus Harian (BPH)</h2>
+            <h2><i class="fas fa-clipboard-list"></i> Badan Pengurus Harian (BPH)</h2>
             <div class="grid">
             <?php if (count($data_bph) > 0): ?>
                 <?php foreach ($data_bph as $row): 
-                    $foto_path = empty($row['foto']) ? 'https://via.placeholder.com/140x140?text=Foto+BPH' : 'uploads/pengurus/' . $row['foto'];
+                    $foto_path = empty($row['foto']) ? 'https://via.placeholder.com/140x140?text=Foto+BPH' : 'uploads/pengurus/' . htmlspecialchars($row['foto']);
                 ?>
-                <div class="card clickable" data-modal="pengurus-<?= $row['id'] ?>">
-                    <img src="<?= htmlspecialchars($foto_path) ?>" alt="<?= htmlspecialchars($row['nama']) ?>" onerror="this.src='https://via.placeholder.com/140x140?text=Foto+BPH'">
+                <div class="card clickable" data-modal="modal-pengurus-<?= $row['id'] ?>">
+                    <img src="<?= $foto_path ?>" alt="<?= htmlspecialchars($row['nama']) ?>" onerror="this.src='https://via.placeholder.com/140x140?text=Foto+BPH'">
                     <h3><?= htmlspecialchars($row['nama']) ?></h3>
                     <p><?= htmlspecialchars($row['jabatan']) ?></p>
                     <?php if ($is_admin): ?>
                     <div class="admin-actions mt-2">
                         <a href="crud_pengurus.php?action=hapus&id=<?= $row['id'] ?>" 
-                           onclick="return confirm('Yakin ingin menghapus <?= $row['nama'] ?>?')" 
+                           onclick="return confirm('Yakin ingin menghapus <?= htmlspecialchars($row['nama']) ?>?')" 
                            class="btn btn-sm btn-delete" style="color: red;"><i class="fas fa-trash-alt"></i> Hapus</a>
                     </div>
                     <?php endif; ?>
@@ -197,23 +217,23 @@ foreach ($data_departemen as $dep) {
         </section>
 
         <section class="struktur-section">
-            <h2>Departemen</h2>
+            <h2><i class="fas fa-sitemap"></i> Departemen</h2>
             
             <?php if (count($data_departemen) > 0): ?>
                 <?php foreach ($departemen_grouped as $group_title => $members): ?>
-                    <h3 style="margin-top: 20px; border-bottom: 2px solid #ccc; padding-bottom: 5px;"><?= htmlspecialchars($group_title) ?></h3>
+                    <h3 style="margin-top: 20px; border-bottom: 2px solid #ccc; padding-bottom: 5px; color: #800000;"><?= htmlspecialchars($group_title) ?></h3>
                     <div class="grid">
                         <?php foreach ($members as $row): 
-                            $foto_path = empty($row['foto']) ? 'https://via.placeholder.com/140x140?text=Foto+Dept' : 'uploads/pengurus/' . $row['foto'];
+                            $foto_path = empty($row['foto']) ? 'https://via.placeholder.com/140x140?text=Foto+Dept' : 'uploads/pengurus/' . htmlspecialchars($row['foto']);
                         ?>
-                        <div class="card clickable" data-modal="pengurus-<?= $row['id'] ?>">
-                            <img src="<?= htmlspecialchars($foto_path) ?>" alt="<?= htmlspecialchars($row['nama']) ?>" onerror="this.src='https://via.placeholder.com/140x140?text=Koor+Dept'">
+                        <div class="card clickable" data-modal="modal-pengurus-<?= $row['id'] ?>">
+                            <img src="<?= $foto_path ?>" alt="<?= htmlspecialchars($row['nama']) ?>" onerror="this.src='https://via.placeholder.com/140x140?text=Koor+Dept'">
                             <h3><?= htmlspecialchars($row['nama']) ?></h3>
                             <p><?= htmlspecialchars($row['jabatan']) ?></p>
                             <?php if ($is_admin): ?>
                             <div class="admin-actions mt-2">
                                 <a href="crud_pengurus.php?action=hapus&id=<?= $row['id'] ?>" 
-                                   onclick="return confirm('Yakin ingin menghapus <?= $row['nama'] ?>?')" 
+                                   onclick="return confirm('Yakin ingin menghapus <?= htmlspecialchars($row['nama']) ?>?')" 
                                    class="btn btn-sm btn-delete" style="color: red;"><i class="fas fa-trash-alt"></i> Hapus</a>
                             </div>
                             <?php endif; ?>
@@ -228,20 +248,20 @@ foreach ($data_departemen as $dep) {
         </section>
         
     </main>
-
+    
     <?php foreach ($data_pengurus as $row): 
-        $foto_path = empty($row['foto']) ? 'https://via.placeholder.com/180x180?text=No+Photo' : 'uploads/pengurus/' . $row['foto'];
+        $foto_path = empty($row['foto']) ? 'https://via.placeholder.com/180x180?text=No+Photo' : 'uploads/pengurus/' . htmlspecialchars($row['foto']);
     ?>
     <div class="modal" id="modal-pengurus-<?= $row['id'] ?>">
         <div class="modal-header">
             <span class="close-modal">&times;</span>
-            <img src="<?= htmlspecialchars($foto_path) ?>" alt="<?= htmlspecialchars($row['nama']) ?>">
+            <img src="<?= $foto_path ?>" alt="<?= htmlspecialchars($row['nama']) ?>">
             <h2><?= htmlspecialchars($row['nama']) ?></h2>
             <h3><?= htmlspecialchars($row['jabatan']) ?></h3>
         </div>
         <div class="modal-content">
             <p><strong>Deskripsi Tugas/Visi Misi:</strong></p>
-            <p style="white-space: pre-wrap;"><?= htmlspecialchars($row['visi_misi']) ?></p> 
+            <p style="white-space: pre-wrap;"><?= nl2br(htmlspecialchars($row['visi_misi'])) ?></p> 
         </div>
     </div>
     <?php endforeach; ?>
@@ -249,5 +269,5 @@ foreach ($data_departemen as $dep) {
     <div class="modal-overlay"></div>
     
     <script src="struktur.js"></script>
-</body>
+    <script src="js/index.js"></script> </body>
 </html>
