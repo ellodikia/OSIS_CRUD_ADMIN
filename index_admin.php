@@ -5,7 +5,7 @@ session_start();
 include 'koneksi.php';
 
 // ----------------------------------------------------------------------
-// --- PROTEKSI AKSES: Hanya ADMIN yang boleh masuk! ---
+// --- PROTEKSI AKSES: Hanya ADMIN yang boleh masuk! ---\
 // ----------------------------------------------------------------------
 // Cek apakah user sudah login dan levelnya benar-benar 'admin'.
 // Kalau tidak, tendang balik ke halaman login.
@@ -15,16 +15,15 @@ if (!isset($_SESSION['level']) || $_SESSION['level'] !== 'admin') {
 }
 
 // ----------------------------------------------------------------------
-// --- DATA FETCHING (Mengambil Data) ---
+// --- DATA FETCHING (Mengambil Data) ---\
 // ----------------------------------------------------------------------
 
-// Ambil 3 Berita terbaru (level='berita') untuk ditampilkan di dashboard
-$sql_berita = "SELECT * FROM berita WHERE level='berita' ORDER BY tanggal_publikasi DESC LIMIT 3";
+// PERBAIKAN: Hapus LIMIT 3 agar semua konten terbaru ditarik untuk admin
+$sql_berita = "SELECT * FROM berita WHERE level='berita' ORDER BY tanggal_publikasi DESC";
 $berita_result = $koneksi->query($sql_berita);
 
-// Ambil 3 Pengumuman terbaru (level='pengumuman')
-// Meskipun di kode awal ini tidak digunakan, kita tetap ambil datanya.
-$sql_pengumuman = "SELECT * FROM berita WHERE level='pengumuman' ORDER BY tanggal_publikasi DESC LIMIT 3";
+// PERBAIKAN: Hapus LIMIT 3
+$sql_pengumuman = "SELECT * FROM berita WHERE level='pengumuman' ORDER BY tanggal_publikasi DESC";
 $pengumuman_result = $koneksi->query($sql_pengumuman);
 
 // Ambil notifikasi dari sesi (sukses/error dari crud_berita.php)
@@ -50,6 +49,7 @@ $koneksi->close(); // Tutup koneksi setelah selesai ambil data
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/index_admin.css">
+    <link rel="stylesheet" href="css/index.css">
     
     
 </head>
@@ -91,7 +91,7 @@ $koneksi->close(); // Tutup koneksi setelah selesai ambil data
             
             <div class="admin-controls" style="margin-bottom: 20px;">
                 <a href="#crud-form" class="btn-primary" style="text-decoration: none; margin-right: 10px;"><i class="fas fa-plus-circle"></i> Tambah Konten</a>
-                <a href="news.php" class="btn-primary" style="background: #17a2b8; text-decoration: none;"><i class="fas fa-search"></i> Lihat Semua Konten</a>
+                
             </div>
             
             <div class="news-grid admin-mode">
@@ -121,6 +121,7 @@ $koneksi->close(); // Tutup koneksi setelah selesai ambil data
                     
                     <?php 
                     // Tampilkan foto jika ada, kalau tidak ada pakai foto default
+                    // Path sudah benar: foto_berita/
                     $foto_path = !empty($row['foto']) ? "foto_berita/" . htmlspecialchars($row['foto']) : "foto/1.jpg"; 
                     ?>
                     <img src="<?= $foto_path ?>" 
@@ -138,7 +139,7 @@ $koneksi->close(); // Tutup koneksi setelah selesai ambil data
                         </p>
                         
                         <div class="news-card__actions" style="margin-top: 10px;">
-                            <a href="edit_berita.php?id=<?= $row['id'] ?>" class="btn-primary" style="background: #17a2b8; text-decoration: none; padding: 5px 10px; font-size: 0.8em;">
+                            <a href="crud_berita.php?action=edit&id=<?= $row['id'] ?>" class="btn-primary" style="background: #17a2b8; text-decoration: none; padding: 5px 10px; font-size: 0.8em;">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
                             <a href="crud_berita.php?action=hapus&id=<?= $row['id'] ?>" 
@@ -199,7 +200,7 @@ $koneksi->close(); // Tutup koneksi setelah selesai ambil data
         </div>
     </section>
         
-    ---
+    <hr>
     
     <section class="section">
         <div class="container">

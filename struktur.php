@@ -113,7 +113,7 @@ $koneksi->close();
     <?= $notification ?>
 
     <main class="container struktur">
-        <h1 class="title">Struktur Pengurus OSIS Raksana 🧑‍🤝‍🧑</h1>
+        <h1 class="title">Struktur Pengurus OSIS Raksana</h1>
 
         <?php if ($is_admin): ?>
         <section class="admin-crud-panel">
@@ -248,6 +248,48 @@ $koneksi->close();
         </section>
         
     </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__content">
+                <div class="footer__column">
+                    <h3>Tentang OSIS</h3>
+                    <p>Organisasi Siswa Intra Sekolah (OSIS) merupakan organisasi resmi sekolah yang bertujuan untuk mengembangkan potensi siswa dan menyalurkan aspirasi siwa.</p>
+                </div>
+                
+                <div class="footer__column">
+                    <h3>Kontak Kami</h3>
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Jl. Gajah Mada No. 20 Medan, Sumatera Utara, Indonesia</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>osisraksana@sch.id</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <span>(061)4524356</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer__column">
+                    <h3>Media Sosial</h3>
+                    <p>Ikuti kami di media sosial untuk informasi terbaru</p>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/osisraksanamdn/" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2025 OSIS Yayasan Pendidikan Raksana. Semua Hak Cipta Dilindungi.</p>
+            </div>
+        </div>
+    </footer>
     
     <?php foreach ($data_pengurus as $row): 
         $foto_path = empty($row['foto']) ? 'https://via.placeholder.com/180x180?text=No+Photo' : 'uploads/pengurus/' . htmlspecialchars($row['foto']);

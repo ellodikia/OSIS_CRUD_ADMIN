@@ -1,24 +1,37 @@
 <?php
-// Selalu mulai dengan session_start() untuk bisa pakai $_SESSION
-session_start();
-// Jangan lupa include file koneksi ke database kita!
-include 'koneksi.php';
+// Tampilkan semua error untuk debugging (WAJIB DILAKUKAN SAAT LOKAL)
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-// Path (lokasi folder) tempat kita mau simpan foto-foto galeri
+session_start();
+include 'koneksi.php'; 
+
+// Debug: Log semua request
+error_log("CRUD_GALERI: Request Method = " . $_SERVER['REQUEST_METHOD']);
+error_log("CRUD_GALERI: GET Data = " . print_r($_GET, true));
+error_log("CRUD_GALERI: POST Data = " . print_r($_POST, true));
+
+// Cek koneksi di sini untuk memastikan tidak ada masalah
+if (!isset($koneksi) || $koneksi->connect_error) {
+    die("Koneksi database GAGAL TOTAL: " . $koneksi->connect_error);
+}
+
+// Path (lokasi folder) tempat kita menyimpan foto-foto galeri
 $target_dir = "foto_galeri/";
 
-// Cek, kalau foldernya belum ada, kita buatkan!
-// Kita kasih izin akses penuh (0777) dan 'true' agar bisa buat folder induk juga (jika perlu)
+// Cek dan buat folder jika belum ada
 if (!file_exists($target_dir)) {
-    mkdir($target_dir, 0777, true);
+    // Izin 0777 diperlukan di lokal agar PHP bisa menulis/menghapus
+    if (!mkdir($target_dir, 0777, true)) {
+        die("GAGAL membuat folder: " . $target_dir);
+    }
 }
 
 // ----------------------------------------------------------------------
-// --- PROTEKSI AKSES: Hanya ADMIN yang boleh masuk ke file CRUD ini! ---
+// --- PROTEKSI AKSES: Hanya ADMIN yang boleh masuk ---
 // ----------------------------------------------------------------------
-// Cek apakah user sudah login dan levelnya BUKAN 'admin'.
-// Kalau iya, tendang balik ke halaman login.
 if (!isset($_SESSION['level']) || $_SESSION['level'] !== 'admin') {
+    $_SESSION['error'] = "Akses ditolak. Hanya admin yang boleh mengakses.";
     header("Location: login.php");
     exit;
 }
@@ -26,63 +39,43 @@ if (!isset($_SESSION['level']) || $_SESSION['level'] !== 'admin') {
 // ----------------------------------------------------------------------
 // --- BAGIAN CREATE (Tambah Foto Baru) ---
 // ----------------------------------------------------------------------
-// Cek apakah ada data yang dikirimkan menggunakan metode POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Ambil nilai 'action' dari POST, defaultnya kosong kalau nggak ada
     $action = $_POST['action'] ?? '';
 
     if ($action === 'tambah_foto') {
-        // Ambil data-data dari form
         $judul = $_POST['judul'] ?? '';
         $keterangan = $_POST['keterangan'] ?? '';
         
-        // Ambil info detail tentang file yang diupload
         $file_name = $_FILES['foto_file']['name'] ?? '';
         $file_tmp = $_FILES['foto_file']['tmp_name'] ?? '';
         $file_size = $_FILES['foto_file']['size'] ?? 0;
         $file_error = $_FILES['foto_file']['error'] ?? 0;
-        // Ambil ekstensi file-nya dan ubah jadi huruf kecil (misal: JPG jadi jpg)
         $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
-        // Pengecekan Keamanan dan Validasi File
-        $allowed_ext = ['jpg', 'jpeg', 'png']; // Ekstensi yang diizinkan
+        $allowed_ext = ['jpg', 'jpeg', 'png']; 
         
-        // Cek ekstensi file
         if (!in_array($file_ext, $allowed_ext)) {
             $_SESSION['error'] = "Format file tidak diizinkan. Hanya JPG, JPEG, atau PNG yang boleh ya.";
-        } 
-        // Cek ukuran file (2000000 bytes = 2MB)
-        elseif ($file_size > 2000000) { 
+        } elseif ($file_size > 2000000) { 
             $_SESSION['error'] = "Ukuran file terlalu besar. Maksimal 2MB saja.";
-        } 
-        // Cek apakah ada error saat proses upload (seperti file korup, dll)
-        elseif ($file_error !== 0) {
+        } elseif ($file_error !== 0) {
             $_SESSION['error'] = "Terjadi kesalahan saat mengupload file.";
         } else {
-            // Kalau semua cek lolos, kita lanjutkan proses upload dan simpan ke DB
-
-            // 1. Buat nama file yang unik banget (pakai uniqid() agar tidak ada duplikasi)
             $new_file_name = uniqid('foto_', true) . '.' . $file_ext;
-            $target_file = $target_dir . $new_file_name; // Path lengkap tujuan file
+            $target_file = $target_dir . $new_file_name; 
 
-            // 2. Pindahkan file dari folder sementara ke folder tujuan kita
             if (move_uploaded_file($file_tmp, $target_file)) {
-                
-                // 3. Simpan data ke database menggunakan Prepared Statement (biar aman!)
                 $stmt = $koneksi->prepare("INSERT INTO galeri (judul, keterangan, path_foto, tanggal_upload) VALUES (?, ?, ?, CURDATE())");
-                // Path yang akan disimpan di DB adalah $target_file (misal: "foto_galeri/foto_5f7c3...")
                 $path_db = $target_file; 
-                // "sss" artinya 3 parameter string
                 $stmt->bind_param("sss", $judul, $keterangan, $path_db);
 
                 if ($stmt->execute()) {
                     $_SESSION['message'] = "Foto **berhasil** diupload dan ditambahkan ke galeri. 🎉";
                 } else {
-                    // Kalau gagal simpan ke DB, file yang sudah terlanjur diupload harus DIBUANG!
-                    unlink($target_file);
+                    unlink($target_file); 
                     $_SESSION['error'] = "Gagal menyimpan data ke database: " . $stmt->error;
                 }
-                $stmt->close(); // Tutup statement
+                $stmt->close(); 
             } else {
                 $_SESSION['error'] = "Gagal memindahkan file yang diupload. Cek izin folder!";
             }
@@ -90,51 +83,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 } 
 // ----------------------------------------------------------------------
-// --- BAGIAN DELETE (Hapus Foto) ---
+// --- BAGIAN DELETE (Hapus Foto) --- 
 // ----------------------------------------------------------------------
-// Cek apakah ada permintaan yang dikirimkan menggunakan metode GET
 elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $action = $_GET['action'] ?? '';
     $id = $_GET['id'] ?? null;
-    $file_path = $_GET['file'] ?? null; // Kita ambil path_foto-nya juga dari GET
 
-    // Pastikan action-nya 'hapus' dan ID serta path file ada
-    if ($action === 'hapus' && $id && $file_path) {
+    error_log("CRUD_GALERI: Action = $action, ID = $id");
+
+    if ($action === 'hapus' && $id) {
+        $id = (int)$id; 
+        error_log("CRUD_GALERI: Memproses hapus untuk ID = $id");
+
+        // Ambil file path yang benar dan aman dari database
+        $stmt_path = $koneksi->prepare("SELECT path_foto FROM galeri WHERE id = ?");
+        if (!$stmt_path) {
+            die("ERROR Prepare Statement: " . $koneksi->error);
+        }
         
-        // 1. Hapus entri dari database dulu
-        $stmt = $koneksi->prepare("DELETE FROM galeri WHERE id = ?");
-        $stmt->bind_param("i", $id); // "i" untuk integer (ID)
+        $stmt_path->bind_param("i", $id);
+        
+        if (!$stmt_path->execute()) {
+            die("ERROR SQL [Ambil Path]: " . $stmt_path->error);
+        }
+        
+        $result_path = $stmt_path->get_result();
+        $path_data = $result_path->fetch_assoc();
+        $stmt_path->close();
+        
+        if ($path_data) {
+            $path_to_delete = $path_data['path_foto'];
+            error_log("CRUD_GALERI: Path file = $path_to_delete");
 
-        if ($stmt->execute()) {
-            // Kalau hapus dari DB berhasil, lanjut ke langkah 2
+            // Hapus entri dari database
+            $stmt_delete = $koneksi->prepare("DELETE FROM galeri WHERE id = ?");
+            if (!$stmt_delete) {
+                die("ERROR Prepare Statement Delete: " . $koneksi->error);
+            }
             
-            // 2. Hapus file fisik dari server
-            // Cek apakah filenya benar-benar ada di path yang diberikan
-            if (file_exists($file_path) && is_file($file_path)) {
-                if (unlink($file_path)) {
-                    $_SESSION['message'] = "Foto dan data berhasil dihapus. ✅";
+            $stmt_delete->bind_param("i", $id); 
+
+            if ($stmt_delete->execute()) {
+                error_log("CRUD_GALERI: Berhasil hapus dari database");
+                
+                // Hapus file fisik dari server
+                if (!empty($path_to_delete) && file_exists($path_to_delete) && is_file($path_to_delete)) {
+                    if (unlink($path_to_delete)) {
+                        $_SESSION['message'] = "Foto dan data berhasil dihapus. ✅";
+                        error_log("CRUD_GALERI: Berhasil hapus file fisik");
+                    } else {
+                        $_SESSION['error'] = "Data berhasil dihapus dari DB, **NAMUN GAGAL MENGHAPUS FILE FISIK**. Cek perizinan folder!";
+                        error_log("CRUD_GALERI: Gagal hapus file fisik");
+                    }
                 } else {
-                    // Beri pesan kalau file fisik gagal dihapus (misalnya izin folder)
-                    $_SESSION['error'] = "Data berhasil dihapus dari DB, namun gagal menghapus file fisik. Tolong hapus manual.";
+                    $_SESSION['message'] = "Foto berhasil dihapus dari DB. File fisik tidak ditemukan/sudah terhapus.";
+                    error_log("CRUD_GALERI: File fisik tidak ditemukan");
                 }
             } else {
-                 // Beri pesan kalau data DB terhapus, tapi filenya memang nggak ada
-                 $_SESSION['message'] = "Foto berhasil dihapus dari DB, namun file fisik tidak ditemukan di server. (Sudah beres!)";
+                $_SESSION['error'] = "Gagal menghapus data dari database: " . $stmt_delete->error;
+                error_log("CRUD_GALERI: Gagal hapus dari database: " . $stmt_delete->error);
             }
+            $stmt_delete->close(); 
+
         } else {
-            $_SESSION['error'] = "Gagal menghapus foto dari database: " . $stmt->error;
+            $_SESSION['error'] = "Data foto dengan ID $id tidak ditemukan.";
+            error_log("CRUD_GALERI: Data tidak ditemukan untuk ID = $id");
         }
-        $stmt->close(); // Tutup statement
+    } else {
+        $_SESSION['error'] = "Parameter tidak valid untuk aksi hapus.";
+        error_log("CRUD_GALERI: Parameter tidak valid");
     }
 }
 
 // ----------------------------------------------------------------------
 // --- PENUTUP ---
 // ----------------------------------------------------------------------
-// Setelah selesai memproses semua aksi (tambah/hapus), tutup koneksi database
 $koneksi->close();
 
-// Lalu, kita arahkan user kembali ke halaman galeri (gallery.php)
 header("Location: gallery.php");
 exit;
 ?>

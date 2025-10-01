@@ -1,6 +1,5 @@
 /* ================================
-   CSS RESET & BASE VARIABLES
-   (Diambil dari index.css untuk konsistensi)
+   CSS VARIABLES & CONFIGURATION
 =================================*/
 :root {
     /* Warna utama (Maroon Theme) */
@@ -46,22 +45,15 @@
     --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.05), 0 10px 10px rgba(0, 0, 0, 0.04);
 }
 
-/* Reset global untuk semua elemen */
+/* ================================
+   BASE STYLES & RESETS
+=================================*/
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* Animasi untuk memuat halaman */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ================================
-   BASE STYLES
-=================================*/
 html {
     scroll-behavior: smooth;
 }
@@ -71,7 +63,6 @@ body {
     line-height: 1.6;
     color: var(--dark);
     background-color: var(--light);
-    animation: fadeIn 0.8s ease-out;
 }
 
 h1, h2, h3, h4 {
@@ -92,7 +83,7 @@ img {
     display: block;
 }
 
-/* Kontainer utama untuk mengatur lebar konten */
+/* Kontainer utama */
 .container {
     width: 100%;
     max-width: 1200px;
@@ -100,7 +91,7 @@ img {
     padding: 0 var(--space-md);
 }
 
-/* Style untuk setiap Section */
+/* Style untuk Section */
 .section {
     padding: var(--space-xxl) 0;
 }
@@ -122,11 +113,12 @@ img {
     border-radius: 2px;
 }
 
+/* Utility Class */
 .text-center {
     text-align: center;
 }
 
-/* Tombol umum (dipakai untuk tombol Lihat/Tambah) */
+/* Tombol umum */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -141,55 +133,38 @@ img {
     gap: 0.5rem;
 }
 
-.btn--primary {
+.btn-primary { /* Digunakan di PHP untuk tombol delete */
     background-color: var(--primary);
     color: white;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-sm);
 }
 
-.btn--primary:hover {
+.btn-primary:hover {
     background-color: var(--primary-light);
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
 }
 
 
 /* ================================
-   GALLERY FILTERS (TABS)
+   NOTIFICATION STYLES (Alerts)
 =================================*/
-
-.gallery-filters {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: var(--space-xl);
-}
-
-.filter-btn {
-    background: white;
-    color: var(--dark);
-    padding: 10px 20px;
-    border: 1px solid var(--light-gray);
-    border-radius: 50px;
-    cursor: pointer;
-    font-size: 0.9rem;
+.alert {
+    padding: var(--space-sm) var(--space-md);
+    margin-bottom: var(--space-md);
+    border-radius: var(--radius);
     font-weight: 600;
-    transition: var(--transition);
-    text-transform: capitalize;
-    box-shadow: var(--shadow-sm);
+    border: 1px solid transparent;
 }
 
-.filter-btn:hover {
-    border-color: var(--primary-light);
-    color: var(--primary);
+.alert-success {
+    background-color: #d4edda;
+    color: var(--success);
+    border-color: #c3e6cb;
 }
 
-.filter-btn.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-    box-shadow: var(--shadow);
+.alert-error {
+    background-color: #f8d7da;
+    color: var(--danger);
+    border-color: #f5c6cb;
 }
 
 /* ================================
@@ -200,7 +175,8 @@ img {
     display: grid;
     /* Responsive: 2 kolom di HP, 3 di Tablet, 4 di Desktop */
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
-    gap: 20px;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
 }
 
 .gallery-item {
@@ -210,190 +186,286 @@ img {
     box-shadow: var(--shadow-md);
     cursor: pointer;
     transition: var(--transition);
+    display: block; /* Memastikan anchor tag berperilaku seperti block */
 }
 
 .gallery-item:hover {
-    transform: scale(1.02);
+    transform: scale(1.03); /* Sedikit lebih besar saat hover */
     box-shadow: var(--shadow-lg);
 }
 
-.gallery-image {
+.gallery-item__image {
     width: 100%;
     height: 300px;
     object-fit: cover;
     transition: transform 0.4s ease;
 }
 
-.gallery-item:hover .gallery-image {
+.gallery-item:hover .gallery-item__image {
     transform: scale(1.08);
 }
 
-/* Overlay Transparan pada Gambar */
-.gallery-overlay {
+/* Overlay Galeri */
+.gallery-item__overlay {
     position: absolute;
-    top: 0;
+    bottom: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 50%);
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 100%);
     color: white;
+    padding: var(--space-md);
+    /* Ganti ke opacity/transition agar lebih halus daripada translateY */
+    opacity: 0;
+    transition: opacity var(--transition);
+    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: var(--space-md);
+}
+
+.gallery-item:hover .gallery-item__overlay {
     opacity: 1;
-    transition: var(--transition);
+    background: linear-gradient(to top, rgba(128, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 100%);
 }
 
-.gallery-item:hover .gallery-overlay {
-    background: linear-gradient(to top, rgba(128, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 50%);
-}
-
-.gallery-caption {
-    font-size: 1.2rem;
+.gallery-item__title {
+    font-size: 1.15rem;
+    margin: 0 0 5px 0;
     font-weight: 600;
-    line-height: 1.3;
-    margin-bottom: var(--space-xs);
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    line-height: 1.2;
 }
 
-.gallery-item:hover .gallery-caption {
-    opacity: 1;
-    transform: translateY(0);
+.gallery-item__date {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
 }
 
-.gallery-date {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.8);
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s;
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: var(--space-xl);
+    border: 2px dashed var(--light-gray);
+    border-radius: var(--radius);
+    color: var(--gray);
 }
 
-.gallery-item:hover .gallery-date {
-    opacity: 1;
-    transform: translateY(0);
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: var(--space-sm);
+    color: var(--primary-light);
 }
-
 
 /* ================================
-   ADMIN CONTROLS (Hanya jika admin mode aktif)
+   ADMIN CONTROLS & FORM
 =================================*/
-.admin-controls {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-    justify-content: flex-start;
+.admin-badge {
+    background-color: var(--accent);
+    color: var(--dark);
+    font-size: 0.6em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 10px;
+    vertical-align: middle;
+    font-family: var(--font-body);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.admin-control-btn {
-    background: var(--primary);
-    color: white;
-    padding: 10px 18px;
-    border-radius: 8px;
-    text-decoration: none;
+/* Form Upload */
+.admin-form-container {
+    max-width: 650px; 
+    margin: var(--space-xl) auto;
+    padding: var(--space-lg);
+    background-color: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--light-gray);
+}
+
+.crud-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.form-group {
+    margin-bottom: var(--space-md);
+}
+
+.admin-form-container label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 1rem;
+}
+
+.admin-form-container input[type="text"],
+.admin-form-container textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--light-gray);
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+    font-family: var(--font-body);
+    transition: border-color var(--transition);
+}
+
+.admin-form-container input[type="text"]:focus,
+.admin-form-container textarea:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(128, 0, 0, 0.1);
+}
+
+.admin-form-container textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.admin-form-container input[type="file"] {
+    display: block; 
+    padding: 10px 0;
     font-size: 0.9rem;
+}
+
+.btn-submit {
+    background-color: var(--primary); /* Menggunakan primary untuk upload */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 600;
+    font-size: 1rem;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    transition: var(--transition);
-    box-shadow: var(--shadow-sm);
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
+    margin-top: var(--space-sm);
 }
 
-.admin-control-btn:hover {
-    background: var(--primary-light);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.btn-submit:hover {
+    background-color: var(--primary-light);
+}
+
+/* Tombol Hapus pada Item Galeri */
+.admin-actions {
+    margin-top: 5px;
 }
 
 .admin-control-btn.danger {
     background: var(--danger);
+    color: white;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
 }
 
 .admin-control-btn.danger:hover {
     background: #a00;
+    transform: translateY(-1px);
 }
 
 /* ================================
-   MODAL (Lightbox untuk detail gambar)
+   MODAL (Lightbox)
 =================================*/
 
 .modal {
-    display: none; /* Default hidden */
-    position: fixed;
-    z-index: 2000; /* Di atas segalanya */
+    display: none; /* Disembunyikan secara default */
+    position: fixed; 
+    z-index: 2000; 
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.9);
-    padding-top: 60px;
+    overflow: auto; 
+    background-color: rgba(0, 0, 0, 0.95); /* Lebih gelap */
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    padding: var(--space-md);
+    transition: opacity 0.3s ease;
+}
+
+.modal.active {
+    display: flex;
 }
 
 .modal-content {
     margin: auto;
-    display: block;
-    width: 80%;
+    display: flex;
+    flex-direction: column;
+    width: 90%;
     max-width: 900px;
-    border-radius: var(--radius-lg);
+    position: relative;
+    background: transparent;
     animation-name: zoom;
-    animation-duration: 0.6s;
+    animation-duration: 0.3s;
 }
 
-/* Animasi Zoom untuk Modal */
 @keyframes zoom {
-    from {transform:scale(0)} 
-    to {transform:scale(1)}
+    from {transform:scale(0.8); opacity: 0;} 
+    to {transform:scale(1); opacity: 1;}
+}
+
+.modal-image {
+    width: 100%;
+    max-height: 80vh;
+    object-fit: contain; /* Memastikan gambar full terlihat */
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-info {
+    text-align: center;
+    color: #f1f1f1;
+    padding: var(--space-md) 0;
+}
+
+.modal-title {
+    color: white;
+    margin-bottom: 5px;
+    font-size: 1.5rem;
 }
 
 .modal-caption {
-    margin: auto;
-    display: block;
-    width: 80%;
-    max-width: 700px;
-    text-align: center;
     color: #ccc;
-    padding: 10px 0;
-    height: 150px;
+    font-size: 1rem;
 }
 
+/* Tombol Tutup (Close Button) */
 .modal-close {
     position: absolute;
-    top: 15px;
-    right: 35px;
+    top: 0;
+    right: 0;
     color: #f1f1f1;
     font-size: 40px;
     font-weight: bold;
     transition: var(--transition);
+    cursor: pointer;
+    line-height: 1;
+    padding: 5px 10px;
 }
 
 .modal-close:hover,
 .modal-close:focus {
     color: var(--primary-light);
-    text-decoration: none;
-    cursor: pointer;
 }
-
 
 /* ================================
    RESPONSIVE BREAKPOINTS
 =================================*/
-@media (max-width: 1200px) {
-    .container { 
-        padding: 0 var(--space-md); 
-    }
-}
-
 @media (max-width: 992px) {
     .gallery-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Lebih rapat di tablet */
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
     }
 }
 
@@ -402,48 +474,45 @@ img {
         padding: var(--space-xl) 0; 
     }
     
-    .gallery-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 kolom di mobile */
-    }
-    
-    .gallery-image {
-        height: 250px;
-    }
-
-    .modal-content {
-        width: 95%;
-    }
-    
-    .modal-caption {
-        width: 95%;
-    }
-    
-    .admin-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .admin-control-btn {
-        justify-content: center;
-        text-align: center;
-    }
-}
-
-@media (max-width: 576px) {
     .container {
         padding: 0 var(--space-sm);
     }
     
     .gallery-grid {
+        grid-template-columns: repeat(2, 1fr); 
+    }
+    
+    .gallery-item__image {
+        height: 250px;
+    }
+
+    .admin-form-container {
+        max-width: 95%;
+        margin: var(--space-lg) auto;
+        padding: var(--space-md);
+    }
+    
+    .modal-image {
+        max-height: 70vh;
+    }
+
+    .modal-close {
+        top: 10px;
+        right: 15px;
+        font-size: 30px;
+    }
+}
+
+@media (max-width: 576px) {
+    .gallery-grid {
         grid-template-columns: 1fr; /* 1 kolom di HP kecil */
     }
     
-    .gallery-image {
+    .gallery-item__image {
         height: 200px;
     }
-    
-    .filter-btn {
-        padding: 8px 15px;
-        font-size: 0.8rem;
+
+    .modal-title {
+        font-size: 1.3rem;
     }
 }

@@ -65,9 +65,8 @@ $koneksi->close();
 
     <section class="hero">
         <div class="container hero__content">
-            <h1 class="hero__title">Selamat Datang di Website OSIS Raksana 👋</h1>
-            <p class="hero__description">Organisasi Siswa Intra Sekolah Yayasan Pendidikan Raksana. Bertindak dan Bersatu untuk Satu Tujuan.</p>
-            <a href="#main-content" class="btn btn--primary">Jelajahi Sekarang</a>
+            <marquee behavior="" direction=""><h1 class="hero__title">Selamat Datang di Website OSIS YP Raksana 🏫</h1></marquee>
+            <p class="hero__description">Organisasi Siswa Intra Sekolah Yayasan Pendidikan Raksana. <br>  Bertindak dan Bersatu untuk Satu.</p>
         </div>
     </section>
 
@@ -85,8 +84,8 @@ $koneksi->close();
                     <?php while($row = $berita_result->fetch_assoc()): ?>
                     <article class="news-card">
                         <?php 
-                        // Tentukan path foto
-                        $foto_path = !empty($row['foto']) ? "uploads/berita/" . htmlspecialchars($row['foto']) : "foto/1.jpg"; 
+                        // PERBAIKAN: Menggunakan foto_berita/ sebagai path yang benar
+                        $foto_path = !empty($row['foto']) ? "foto_berita/" . htmlspecialchars($row['foto']) : "foto/1.jpg"; 
                         ?>
                         <img src="<?= $foto_path ?>" 
                              alt="<?= htmlspecialchars($row['judul']) ?>" 
@@ -117,7 +116,7 @@ $koneksi->close();
         </div>
     </section>
     
-    ---
+    <hr>
 
     <section class="section bg-gray">
         <div class="container">
@@ -143,26 +142,18 @@ $koneksi->close();
                     </div>
                     <?php endwhile; ?>
                 <?php else: ?>
-                    <div class="announcement-item">
-                        <span class="announcement-badge">BARU</span>
-                        <div class="announcement-item__content">
-                            <h3 class="announcement-item__title">Selamat Datang di Website OSIS Raksana</h3>
-                            <p class="announcement-item__description">
-                                Website OSIS Raksana telah resmi diluncurkan! Pantau terus halaman ini dan bagian **Berita & Pengumuman** untuk informasi terbaru kegiatan OSIS.
-                            </p>
-                            <span class="announcement-date"><i class="fas fa-clock"></i> Hari Ini</span>
-                        </div>
+                    <div class="empty-state" style="text-align: center; padding: 30px; border: 1px dashed #ddd;">
+                        <i class="fas fa-box-open" style="font-size: 2em; color: #aaa;"></i>
+                        <p>Saat ini belum ada Pengumuman penting yang dipublikasikan.</p>
                     </div>
                 <?php endif; ?>
             </div>
             
-            <div style="text-align: center; margin-top: 30px;">
-                <a href="news.php" class="btn btn--primary" style="background: #17a2b8;">Lihat Semua Pengumuman</a>
-            </div>
+          
         </div>
     </section>
 
-    ---
+    <hr>
 
     <section class="section">
         <div class="container">
@@ -217,7 +208,7 @@ $koneksi->close();
                         </div>
                         <div class="contact-item">
                             <i class="fas fa-phone"></i>
-                            <span>(No Telepon Sekolah)</span>
+                            <span>(061)4524356</span>
                         </div>
                     </div>
                 </div>

@@ -103,8 +103,8 @@ $events_json = json_encode($events_data);
 
     <?= $notification ?>
 
-    <main class="container">
-        <h1 class="page-title">Kalender Kegiatan OSIS Raksana 📅
+    <main class="container"> <br>
+        <h1 class="page-title"> <center>Kalender OSIS📅</center>
             <?php if($is_admin) echo '<span class="admin-badge"><i class="fas fa-user-shield"></i> Admin Mode</span>'; ?>
         </h1>
         
@@ -205,27 +205,109 @@ $events_json = json_encode($events_data);
         </section>
         <?php endif; ?>
     </main>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__content">
+                <div class="footer__column">
+                    <h3>Tentang OSIS</h3>
+                    <p>Organisasi Siswa Intra Sekolah (OSIS) merupakan organisasi resmi sekolah yang bertujuan untuk mengembangkan potensi siswa dan menyalurkan aspirasi siwa.</p>
+                </div>
+                
+                <div class="footer__column">
+                    <h3>Kontak Kami</h3>
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Jl. Gajah Mada No. 20 Medan, Sumatera Utara, Indonesia</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>osisraksana@sch.id</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <span>(061)4524356</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer__column">
+                    <h3>Media Sosial</h3>
+                    <p>Ikuti kami di media sosial untuk informasi terbaru</p>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/osisraksanamdn/" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2025 OSIS Yayasan Pendidikan Raksana. Semua Hak Cipta Dilindungi.</p>
+            </div>
+        </div>
+    </footer>
     
-    <script src="js/kalender.js"></script>
+    <script src="js/kalender.js"></script> 
+
     <script>
         // Data kegiatan dari PHP di-inject ke JavaScript
         const eventsData = <?= $events_json ?>;
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Inisialisasi kalender dengan data kegiatan dari database
+            // ======================================
+            // 1. MOBILE MENU FIX (Memastikan Toggle Berfungsi)
+            // ======================================
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const nav = document.querySelector('.nav');
+            const navOverlay = document.querySelector('.nav-overlay');
+            const body = document.body;
+
+            if (mobileMenuBtn && nav) {
+                function toggleMobileMenu() {
+                    nav.classList.toggle('active');
+                    if (navOverlay) navOverlay.classList.toggle('active');
+                    
+                    // Mengubah ikon dari ☰ ke ✕ saat menu aktif
+                    mobileMenuBtn.innerHTML = nav.classList.contains('active') ? '✕' : '☰';
+                    
+                    // Mencegah body scroll saat menu terbuka
+                    body.style.overflow = nav.classList.contains('active') ? 'hidden' : ''; 
+                }
+                
+                // Menambahkan Event Listener untuk Tombol Toggle
+                mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+                
+                // Menutup menu saat klik overlay
+                if (navOverlay) {
+                    navOverlay.addEventListener('click', toggleMobileMenu);
+                }
+                
+                // Menutup menu saat link di klik (Good UX)
+                nav.querySelectorAll('.nav__link').forEach(link => {
+                    link.addEventListener('click', function() {
+                        if (nav.classList.contains('active')) {
+                            toggleMobileMenu(); 
+                        }
+                    });
+                });
+            }
+
+
+            // ======================================
+            // 2. LOGIKA KALENDER (Inisialisasi)
+            // ======================================
             if (typeof initCalendar === 'function') {
                 initCalendar(eventsData); 
             } else {
-                console.error('Fungsi initCalendar belum dimuat.');
+                console.error('Fungsi initCalendar belum dimuat. Cek kalender.js.');
             }
-        });
-    </script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Cek apakah user adalah admin
+
+            // ======================================
+            // 3. LOGIKA ADMIN (Hapus & Validasi Form)
+            // ======================================
             if (<?= $is_admin ? 'true' : 'false' ?>) {
-                // Tambahkan konfirmasi untuk aksi hapus
+                // ... (Kode untuk Hapus & Form Validation yang sudah Anda buat) ...
+                
                 const deleteLinks = document.querySelectorAll('.btn-delete');
                 deleteLinks.forEach(link => {
                     link.addEventListener('click', function(e) {
@@ -235,7 +317,6 @@ $events_json = json_encode($events_data);
                     });
                 });
                 
-                // Form validation sederhana
                 const adminForm = document.querySelector('.crud-form');
                 if (adminForm) {
                     adminForm.addEventListener('submit', function(e) {
@@ -248,13 +329,11 @@ $events_json = json_encode($events_data);
                             return;
                         }
                         
-                        // Menampilkan loading state saat submit
                         const submitBtn = adminForm.querySelector('button[type="submit"]');
                         const originalText = submitBtn.innerHTML;
                         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
                         submitBtn.disabled = true;
                         
-                        // Revert loading state (jika terjadi error client-side atau sebagai fallback)
                         setTimeout(() => {
                             submitBtn.innerHTML = originalText;
                             submitBtn.disabled = false;
