@@ -171,9 +171,9 @@ $berita_to_edit = [
 $form_title = "Tambah Berita/Pengumuman Baru";
 $is_tambah_mode = true; // Flag untuk mode tambah
 
-if (isset($_GET['action']) && $_GET['action'] == 'edit' && iss®et($_GET['id'])) {
+if (isset($_GET['action']) && $_GET['action'] == 'edit' && isset($_GET['id'])) {
     $id_berita = (int)$_GET['id'];
-    $is_tambah_mode = false; // mode edit
+    $is_tambah_mode = false; //  mode edit
     
     // Ambil data dari database untuk diisi ke form
     $sql_edit = "SELECT id, judul, isi, level, foto FROM berita WHERE id = ?";
