@@ -1,1 +1,1 @@
-https://ellodikia.github.io/OSIS_CRUD_ADMIN/
+https://osisraksana.gt.tc
